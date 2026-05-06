@@ -469,9 +469,11 @@ function getNormalizedResourceText(resource) {
   ];
 
   return searchableFields
-    .flatMap((field) => getValuesFromResource({ field }, "field"))
-    .join(" ")
-    .toLowerCase();
+      .flatMap((field) => getValuesFromResource({field}, "field"))
+      .join(" ")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
 }
 
 function getDistanceInMeters(lat1, lng1, lat2, lng2) {
