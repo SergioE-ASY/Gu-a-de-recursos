@@ -808,9 +808,11 @@ function PublicMapPage() {
   }, [resources, appliedFilters, userPosition]);
 
   const filteredResources = useMemo(() => {
-    const term = search.trim().toLowerCase();
+    // Normaliza quitando tildes y pasando a minúsculas
+    const normalize = (str) => str?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") ?? "";
+    const term = normalize(search.trim());
     if (!term) return resourcesAfterCategoryFilter;
-    return resourcesAfterCategoryFilter.filter((item) => item.tit?.toLowerCase().includes(term));
+    return resourcesAfterCategoryFilter.filter((item) => normalize(item.tit).includes(term));
   }, [resourcesAfterCategoryFilter, search]);
 
   const selectedResource = useMemo(() => {

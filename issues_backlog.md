@@ -17,3 +17,7 @@ Este documento centraliza las tareas pendientes y en curso para la mejora de la 
 - **Prioridad**: Media
 
 ---
+### 3. Corrección de búsqueda sin tildes
+- **Descripción**: El filtro de búsqueda no encontraba recursos al escribir sin tildes (ej: "medico" no encontraba "médico"). Se normaliza el texto eliminando diacríticos antes de comparar.
+- **Estado**: Completada
+- **Prioridad**: Media
