@@ -117,14 +117,15 @@ function InternalPeopleGuidePage({ readOnly = false }) {
   }, [session]);
 
   const filteredPeople = useMemo(() => {
-    const term = query.trim().toLowerCase();
+    const normalize = (str) => str?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") ?? "";
+    const term = normalize(query.trim());
     return people.filter((person) => {
       if (typeFilter !== "todos" && person.tipo !== typeFilter) return false;
       if (!term) return true;
       return (
-        person.nombre?.toLowerCase().includes(term) ||
-        person.zona?.toLowerCase().includes(term) ||
-        person.email?.toLowerCase().includes(term)
+          normalize(person.nombre).includes(term) ||
+          normalize(person.zona).includes(term) ||
+          normalize(person.email).includes(term)
       );
     });
   }, [people, query, typeFilter]);

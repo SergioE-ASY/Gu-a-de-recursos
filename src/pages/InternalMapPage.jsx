@@ -235,10 +235,11 @@ function InternalMapPage() {
   }, [filteredResources, filteredPeople]);
 
   const searchedItems = useMemo(() => {
-    const term = search.trim().toLowerCase();
+    const normalize = (str) => str?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") ?? "";
+    const term = normalize(search.trim());
     if (!term) return allSearchItems;
     return allSearchItems.filter(
-      (item) => item.label?.toLowerCase().includes(term) || item.subtitle?.toLowerCase().includes(term)
+        (item) => normalize(item.label).includes(term) || normalize(item.subtitle).includes(term)
     );
   }, [allSearchItems, search]);
 
