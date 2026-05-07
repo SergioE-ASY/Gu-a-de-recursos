@@ -32,12 +32,12 @@ Este documento centraliza las tareas pendientes y en curso para la mejora de la 
 
 #### 4.2 Marcadores sin validación de coordenadas
 - **Descripción**: `position={[resource.lat, resource.lng]}` sin comprobar si son null/undefined. Si un recurso no tiene coordenadas Leaflet rompe la página entera.
-- **Estado**: Pendiente
+- **Estado**: Completada
 - **Prioridad**: Alta
 
 #### 4.3 Email renderizado como tel:
 - **Descripción**: En `PublicMapPage.jsx` los enlaces de contacto usan siempre `href="tel:"` aunque el valor sea un email.
-- **Estado**: Pendiente
+- **Estado**: Completada
 - **Prioridad**: Alta
 
 ---

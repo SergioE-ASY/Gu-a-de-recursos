@@ -549,7 +549,8 @@ function renderListItems(value) {
       <ul>
         {entries.map(([label, link]) => (
           <li key={label}>
-            <a href={`tel:${link}`}>{label}</a>
+            {/* Si el valor contiene @ es un email, si no se trata como teléfono */}
+            <a href={link.includes("@") ? `mailto:${link}` : `tel:${link}`}>{label}</a>
           </li>
         ))}
       </ul>
