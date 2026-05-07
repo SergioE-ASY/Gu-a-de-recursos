@@ -89,7 +89,7 @@ Este documento centraliza las tareas pendientes y en curso para la mejora de la 
 
 #### 7.1 Colores de tipos de persona todos en negro
 - **Descripción**: `peopleTypeColors` tiene #000000 para los tres tipos, la leyenda del mapa es inútil.
-- **Estado**: Pendiente
+- **Estado**: Completado
 - **Prioridad**: Media
 
 #### 7.2 Código duplicado entre páginas
@@ -104,5 +104,5 @@ Este documento centraliza las tareas pendientes y en curso para la mejora de la 
 
 #### 7.4 Búsqueda en admin sin normalización de tildes
 - **Descripción**: El filtro de búsqueda en `AdminPortalPage.jsx` no normaliza tildes, a diferencia del resto de la app.
-- **Estado**: Pendiente
+- **Estado**: Completado
 - **Prioridad**: Media
