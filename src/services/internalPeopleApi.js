@@ -121,7 +121,7 @@ export async function listInternalPeople() {
       const fromSimply = simplyUrl ? await requestJson(simplyUrl, { method: "GET" }) : [];
       const fromInternal = internalUrl ? await requestJson(internalUrl, { method: "GET" }) : [];
       const merged = [...fromSimply, ...fromInternal].map(normalizePerson);
-      if (merged.length > 0) return merged;
+      return merged;
     } catch (error) {
       if (!ENABLE_MOCK_SIMPLY) throw error;
     }

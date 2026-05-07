@@ -825,10 +825,11 @@ function PublicMapPage() {
     return resourcesAfterCategoryFilter.filter((item) => normalize(item.tit).includes(term));
   }, [resourcesAfterCategoryFilter, search]);
 
+  // Busca en el array completo para que la ficha no desaparezca al cambiar filtros
   const selectedResource = useMemo(() => {
     if (selectedResourceId === null) return null;
-    return filteredResources.find((item) => item.id === selectedResourceId) ?? null;
-  }, [filteredResources, selectedResourceId]);
+    return resources.find((item) => item.id === selectedResourceId) ?? null;
+  }, [resources, selectedResourceId]);
 
   const activeFilterCount = useMemo(
     () => Object.values(appliedFilters).reduce((total, values) => total + values.length, 0),

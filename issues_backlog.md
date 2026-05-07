@@ -51,17 +51,17 @@ Este documento centraliza las tareas pendientes y en curso para la mejora de la 
 
 #### 5.2 selectedResource se busca en filteredResources
 - **Descripción**: Si el usuario selecciona un recurso y cambia los filtros, la ficha lateral desaparece. Debería buscarse en todos los recursos.
-- **Estado**: Pendiente
+- **Estado**: Completada
 - **Prioridad**: Media
 
 #### 5.3 Fallback silencioso a mock en login
 - **Descripción**: Si la API real falla, el login cae al mock sin avisar. Un usuario puede autenticarse con credenciales de demo con API real configurada.
-- **Estado**: Pendiente
+- **Estado**: Completada
 - **Prioridad**: Media
 
 #### 5.4 Array vacío de API tratado como fallo
 - **Descripción**: En `internalPeopleApi.js`, si la API devuelve 0 resultados (válido), cae al mock como si fuera un error.
-- **Estado**: Pendiente
+- **Estado**: Completada
 - **Prioridad**: Media
 
 ---
