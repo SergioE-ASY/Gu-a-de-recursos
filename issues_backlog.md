@@ -94,7 +94,7 @@ Este documento centraliza las tareas pendientes y en curso para la mejora de la 
 
 #### 7.2 Código duplicado entre páginas
 - **Descripción**: Funciones como `normalizePersonIcon`, `getValuesFromResource`, `isMobileViewport` están copiadas en múltiples páginas. Extraer a módulos compartidos.
-- **Estado**: Pendiente
+- **Estado**: Completada
 - **Prioridad**: Baja
 
 #### 7.3 FlyToResource sin validación de coordenadas

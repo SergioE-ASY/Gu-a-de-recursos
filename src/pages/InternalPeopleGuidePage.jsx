@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { CircleMarker, MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
-import L from "leaflet";
 import { getPersistedSession, logout } from "../services/authApi";
+import { normalizePersonIcon, normalizeText } from "../utils/mapUtils";
 import { fetchResources } from "../services/resourcesApi";
 import {
   TYPE_COLORS,
@@ -21,19 +21,6 @@ const PEOPLE_LABELS = {
   potencial: "Persona Potencial",
   recurso: "Persona Recurso",
 };
-
-function normalizePersonIcon(type) {
-  const iconUrl = `/assets/icons/map_markers/persona_${type}.svg`;
-  const size = [54, 54];
-  const anchor = [27, 54];
-
-  return L.icon({
-    iconUrl,
-    iconSize: size,
-    iconAnchor: anchor,
-    popupAnchor: [0, -size[1] / 2],
-  });
-}
 
 const initialForm = {
   nombre: "",
@@ -122,15 +109,14 @@ function InternalPeopleGuidePage({ readOnly = false }) {
   }, [session]);
 
   const filteredPeople = useMemo(() => {
-    const normalize = (str) => str?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") ?? "";
-    const term = normalize(query.trim());
+    const term = normalizeText(query.trim());
     return people.filter((person) => {
       if (typeFilter !== "todos" && person.tipo !== typeFilter) return false;
       if (!term) return true;
       return (
-          normalize(person.nombre).includes(term) ||
-          normalize(person.zona).includes(term) ||
-          normalize(person.email).includes(term)
+          normalizeText(person.nombre).includes(term) ||
+          normalizeText(person.zona).includes(term) ||
+          normalizeText(person.email).includes(term)
       );
     });
   }, [people, query, typeFilter]);
