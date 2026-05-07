@@ -46,7 +46,7 @@ Este documento centraliza las tareas pendientes y en curso para la mejora de la 
 
 #### 5.1 Keyword "no" en libre-acceso
 - **Descripción**: La keyword `"no"` en el filtro de libre acceso genera falsos positivos en cualquier texto que contenga "no" (contacto, información...).
-- **Estado**: Pendiente
+- **Estado**: Completada
 - **Prioridad**: Media
 
 #### 5.2 selectedResource se busca en filteredResources

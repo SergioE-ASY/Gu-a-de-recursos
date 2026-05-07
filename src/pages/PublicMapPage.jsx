@@ -290,7 +290,7 @@ const ACCESS_FILTER_OPTIONS = [
 ];
 
 const ACCESS_KEYWORDS = {
-  "libre-acceso": ["no", "sin requisitos", "libre", "libre acceso", "abierto publico"],
+  "libre-acceso": ["sin requisitos", "libre", "libre acceso", "abierto publico"],
   "cita-previa": ["cita", "cita previa", "solicitar cita"],
   "derivacion-profesional": ["derivación", "derivacion", "profesional", "servicios sociales", "sanitarios", "derivado"],
   "valoracion-tecnica": ["valoración", "valoracion", "técnica", "tecnica", "evaluación", "evaluacion"],
