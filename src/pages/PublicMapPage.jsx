@@ -290,7 +290,7 @@ const ACCESS_FILTER_OPTIONS = [
 ];
 
 const ACCESS_KEYWORDS = {
-  "libre-acceso": ["no", "sin requisitos", "libre", "libre acceso", "abierto publico"],
+  "libre-acceso": ["sin requisitos", "libre", "libre acceso", "abierto publico"],
   "cita-previa": ["cita", "cita previa", "solicitar cita"],
   "derivacion-profesional": ["derivación", "derivacion", "profesional", "servicios sociales", "sanitarios", "derivado"],
   "valoracion-tecnica": ["valoración", "valoracion", "técnica", "tecnica", "evaluación", "evaluacion"],
@@ -469,9 +469,11 @@ function getNormalizedResourceText(resource) {
   ];
 
   return searchableFields
-    .flatMap((field) => getValuesFromResource({ field }, "field"))
-    .join(" ")
-    .toLowerCase();
+      .flatMap((field) => getValuesFromResource({field}, "field"))
+      .join(" ")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
 }
 
 function getDistanceInMeters(lat1, lng1, lat2, lng2) {

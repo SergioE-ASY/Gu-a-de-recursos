@@ -77,9 +77,11 @@ function AdminPortalPage() {
   }, [session]);
 
   const filteredResources = useMemo(() => {
-    const term = query.trim().toLowerCase();
+    // Normaliza quitando tildes y pasando a minúsculas
+    const normalize = (str) => str?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") ?? "";
+    const term = normalize(query.trim());
     if (!term) return resources;
-    return resources.filter((item) => item.tit?.toLowerCase().includes(term));
+    return resources.filter((item) => normalize(item.tit).includes(term));
   }, [resources, query]);
 
   async function handleLoginSubmit(event) {

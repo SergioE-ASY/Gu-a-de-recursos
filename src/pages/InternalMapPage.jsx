@@ -5,7 +5,7 @@ import L from "leaflet";
 import "../App.css";
 import { getPersistedSession, logout } from "../services/authApi";
 import { fetchResources } from "../services/resourcesApi";
-import { listInternalPeople } from "../services/internalPeopleApi";
+import { listInternalPeople, TYPE_COLORS as peopleTypeColors } from "../services/internalPeopleApi";
 
 const defaultCenter = [27.74216081251307, -18.008738423478977];
 const resultsPerPage = 12;
@@ -45,11 +45,6 @@ const tileLayers = {
       "Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community",
     maxZoom: 20,
   },
-};
-const peopleTypeColors = {
-  usuaria: "#000000",
-  potencial: "#000000",
-  recurso: "#000000",
 };
 
 const PEOPLE_LABELS = {

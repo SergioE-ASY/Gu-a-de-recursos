@@ -8,9 +8,9 @@ const ENABLE_MOCK_SIMPLY = import.meta.env.VITE_ENABLE_MOCK_SIMPLY !== "false";
 const MOCK_KEY = "internal_people_resources_db";
 
 const TYPE_COLORS = {
-  usuaria: "#000000",
-  potencial: "#000000",
-  recurso: "#000000",
+  usuaria: "#2563eb",   // azul - persona usuaria activa
+  potencial: "#f59e0b", // naranja - persona potencial
+  recurso: "#16a34a",   // verde - persona recurso
 };
 
 const MOCK_PEOPLE = [
