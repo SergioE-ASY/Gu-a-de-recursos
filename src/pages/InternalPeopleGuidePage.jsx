@@ -70,6 +70,11 @@ function renderArrayItems(items, emptyLabel = "Sin datos") {
   );
 }
 
+// Comprueba que lat y lng sean números válidos antes de usarlos en Leaflet
+function isValidCoord(lat, lng) {
+  return typeof lat === "number" && typeof lng === "number" && !isNaN(lat) && !isNaN(lng);
+}
+
 function InternalPeopleGuidePage({ readOnly = false }) {
   const [session, setSession] = useState(() => getPersistedSession());
   const [people, setPeople] = useState([]);
@@ -323,22 +328,29 @@ function InternalPeopleGuidePage({ readOnly = false }) {
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                 url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
-              {filteredPeople.map((person) => (
-                <Marker
-                  key={person.id}
-                  position={[person.lat, person.lng]}
-                  icon={normalizePersonIcon(person.tipo)}
-                  zIndexOffset={1000}
-                  eventHandlers={{ click: () => openPersonSheet(person.id) }}
-                >
-                  <Popup>
-                    <strong>{person.nombre}</strong>
-                    <br />
-                    {PEOPLE_LABELS[person.tipo] || person.tipo} · {person.zona}
-                  </Popup>
-                </Marker>
-              ))}
-              {resources.map((resource) => (
+              {filteredPeople.map((person) => {
+                // Omitir marcadores con coordenadas inválidas
+                if (!isValidCoord(person.lat, person.lng)) return null;
+                return (
+                  <Marker
+                    key={person.id}
+                    position={[person.lat, person.lng]}
+                    icon={normalizePersonIcon(person.tipo)}
+                    zIndexOffset={1000}
+                    eventHandlers={{ click: () => openPersonSheet(person.id) }}
+                  >
+                    <Popup>
+                      <strong>{person.nombre}</strong>
+                      <br />
+                      {PEOPLE_LABELS[person.tipo] || person.tipo} · {person.zona}
+                    </Popup>
+                  </Marker>
+                );
+              })}
+              {resources.map((resource) => {
+                // Omitir marcadores con coordenadas inválidas
+                if (!isValidCoord(resource.lat, resource.lng)) return null;
+                return (
                 <CircleMarker
                   key={`resource-${resource.id}`}
                   center={[resource.lat, resource.lng]}
@@ -357,7 +369,8 @@ function InternalPeopleGuidePage({ readOnly = false }) {
                     Recurso de la guia
                   </Popup>
                 </CircleMarker>
-              ))}
+                );
+              })}
             </MapContainer>
           </div>
 
@@ -536,21 +549,25 @@ function InternalPeopleGuidePage({ readOnly = false }) {
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                   url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
-                {filteredPeople.map((person) => (
-                  <Marker
-                    key={person.id}
-                    position={[person.lat, person.lng]}
-                    icon={normalizePersonIcon(person.tipo)}
-                    zIndexOffset={1000}
-                    eventHandlers={{ click: () => openPersonSheet(person.id) }}
-                  >
-                    <Popup>
-                      <strong>{person.nombre}</strong>
-                      <br />
-                      {PEOPLE_LABELS[person.tipo] || person.tipo} · {person.zona}
-                    </Popup>
-                  </Marker>
-                ))}
+                {filteredPeople.map((person) => {
+                  // Omitir marcadores con coordenadas inválidas
+                  if (!isValidCoord(person.lat, person.lng)) return null;
+                  return (
+                    <Marker
+                      key={person.id}
+                      position={[person.lat, person.lng]}
+                      icon={normalizePersonIcon(person.tipo)}
+                      zIndexOffset={1000}
+                      eventHandlers={{ click: () => openPersonSheet(person.id) }}
+                    >
+                      <Popup>
+                        <strong>{person.nombre}</strong>
+                        <br />
+                        {PEOPLE_LABELS[person.tipo] || person.tipo} · {person.zona}
+                      </Popup>
+                    </Marker>
+                  );
+                })}
               </MapContainer>
             </div>
             {selectedPerson && (

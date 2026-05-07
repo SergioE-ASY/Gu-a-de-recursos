@@ -516,6 +516,11 @@ function normalizeMarkerIcon(iconName) {
   return `/assets/icons/map_markers/${iconName}.png`;
 }
 
+// Comprueba que lat y lng sean números válidos antes de usarlos en Leaflet
+function isValidCoord(lat, lng) {
+  return typeof lat === "number" && typeof lng === "number" && !isNaN(lat) && !isNaN(lng);
+}
+
 function getValuesFromResource(resource, key) {
   const value = resource[key];
   if (typeof value === "string") return [value];
@@ -710,6 +715,8 @@ function FlyToResource({ resource }) {
 
   useEffect(() => {
     if (!resource) return;
+    // No volar si las coordenadas no son válidas
+    if (!isValidCoord(resource.lat, resource.lng)) return;
     map.setView([resource.lat, resource.lng], 15, { animate: true });
   }, [map, resource]);
 
@@ -1042,6 +1049,9 @@ function PublicMapPage() {
             maxZoom={tileLayers[mapViewMode].maxZoom}
           />
           {filteredResources.map((resource) => {
+            // Omitir marcadores con coordenadas inválidas
+            if (!isValidCoord(resource.lat, resource.lng)) return null;
+
             const icon = L.icon({
               iconUrl: normalizeMarkerIcon(resource.map_marker_icon),
               iconSize: [32, 37],

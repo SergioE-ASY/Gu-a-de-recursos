@@ -27,7 +27,7 @@ Este documento centraliza las tareas pendientes y en curso para la mejora de la 
 
 #### 4.1 CircleMarker no importado
 - **Descripción**: `<CircleMarker>` se usa en `InternalPeopleGuidePage.jsx` pero no está importado. Rompe la página cuando una trabajadora accede al mapa interno.
-- **Estado**: Pendiente
+- **Estado**: Completada
 - **Prioridad**: Alta
 
 #### 4.2 Marcadores sin validación de coordenadas
