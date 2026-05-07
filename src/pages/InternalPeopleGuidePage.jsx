@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
-import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
+import { CircleMarker, MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 import L from "leaflet";
 import { getPersistedSession, logout } from "../services/authApi";
 import { fetchResources } from "../services/resourcesApi";
