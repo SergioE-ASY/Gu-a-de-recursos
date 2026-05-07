@@ -279,11 +279,12 @@
 .internal-people-grid {
   padding: 1rem;
   display: grid;
-  grid-template-columns: 360px 1fr;
+  grid-template-columns: 380px 1fr;
+  grid-template-rows: auto 1fr;
   grid-template-areas:
     "list form"
-    "map map";
-  gap: 0.8rem;
+    "list map";
+  gap: 1rem;
 }
 
 .internal-map-consult-layout {
@@ -339,10 +340,25 @@
 
 .people-list-card {
   grid-area: list;
+  overflow: visible;
+}
+
+.people-list-card .resource-actions button {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+  min-height: unset;
 }
 
 .people-form-card {
   grid-area: form;
+  max-width: 680px;
+  padding: 1.5rem;
+}
+
+.people-form-card .editor-form input,
+.people-form-card .editor-form select,
+.people-form-card .editor-form textarea {
+  width: 100%;
 }
 
 .people-map-card {
@@ -376,7 +392,7 @@
   border: 1px solid #cbd5e1;
   border-radius: 12px;
   overflow: hidden;
-  height: 380px;
+  height: 300px;
 }
 
 .people-map {

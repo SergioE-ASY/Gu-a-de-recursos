@@ -258,9 +258,9 @@ function InternalPeopleGuidePage({ readOnly = false }) {
       </header>
 
       <section className="people-legend">
-        <span><i style={{ background: "#000000" }} /> Usuaria Atendida</span>
-        <span><i style={{ background: "#000000" }} /> Persona Potencial</span>
-        <span><i style={{ background: "#000000" }} /> Persona Recurso</span>
+        <span><i style={{ background: TYPE_COLORS.usuaria }} /> Usuaria Atendida</span>
+        <span><i style={{ background: TYPE_COLORS.potencial }} /> Persona Potencial</span>
+        <span><i style={{ background: TYPE_COLORS.recurso }} /> Persona Recurso</span>
         <span><i style={{ background: "#2563eb" }} /> Recursos (centros/instalaciones)</span>
       </section>
 

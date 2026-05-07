@@ -106,3 +106,8 @@ Este documento centraliza las tareas pendientes y en curso para la mejora de la 
 - **Descripción**: El filtro de búsqueda en `AdminPortalPage.jsx` no normaliza tildes, a diferencia del resto de la app.
 - **Estado**: Completado
 - **Prioridad**: Media
+
+### 8. Mejoras visuales en Guía Interna de Personas
+- **Descripción**: Corrección de colores en leyenda del mapa (usaban negro en lugar de los colores reales por tipo), límite de ancho en formulario de persona-recurso y ajuste de layout del grid interno.
+- **Estado**: En curso
+- **Prioridad**: Media
