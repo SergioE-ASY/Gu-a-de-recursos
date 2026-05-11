@@ -279,11 +279,14 @@
 .internal-people-grid {
   padding: 1rem;
   display: grid;
-  grid-template-columns: 360px 1fr;
-  grid-template-areas:
-    "list form"
-    "map map";
-  gap: 0.8rem;
+  /* 3 columnas: lista | formulario | mapa, todos en la misma fila */
+  grid-template-columns: 380px minmax(360px, 1fr) minmax(320px, 1fr);
+  grid-template-rows: 1fr;
+  grid-template-areas: "list form map";
+  gap: 1rem;
+  /* altura mínima para que el mapa tenga espacio suficiente */
+  min-height: calc(100vh - 120px);
+  align-items: start;
 }
 
 .internal-map-consult-layout {
@@ -339,14 +342,35 @@
 
 .people-list-card {
   grid-area: list;
+  overflow: visible;
+}
+
+.people-list-card .resource-actions button {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+  min-height: unset;
 }
 
 .people-form-card {
   grid-area: form;
+  max-width: 680px;
+  padding: 1.5rem;
+}
+
+.people-form-card .editor-form input,
+.people-form-card .editor-form select,
+.people-form-card .editor-form textarea {
+  width: 100%;
 }
 
 .people-map-card {
   grid-area: map;
+  /* sticky: el mapa queda visible mientras se hace scroll en lista/formulario */
+  position: sticky;
+  top: 1rem;
+  max-height: calc(100vh - 130px);
+  display: flex;
+  flex-direction: column;
 }
 
 .type-filters {
@@ -376,12 +400,16 @@
   border: 1px solid #cbd5e1;
   border-radius: 12px;
   overflow: hidden;
-  height: 380px;
+  /* flex:1 para que crezca con la tarjeta sticky */
+  flex: 1;
+  min-height: 400px;
 }
 
+/* Leaflet necesita altura en px, no height:100% sobre flex.
+   Usamos la misma lógica que el wrap pero aplicada directamente al mapa. */
 .people-map {
   width: 100%;
-  height: 100%;
+  height: 400px;
 }
 
 .person-sheet {
@@ -392,6 +420,9 @@
   padding: 0.65rem;
   display: grid;
   gap: 0.45rem;
+  /* scroll para que el panel de matchmaking no quede oculto fuera de pantalla */
+  max-height: calc(100vh - 520px);
+  overflow-y: auto;
 }
 
 .internal-sheet {
@@ -505,6 +536,44 @@
   gap: 0.2rem;
 }
 
+/* ── Agente de Matchmaking ── */
+.matchmaking-panel {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 0.65rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.matchmaking-panel h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #1f2937;
+}
+
+.matchmaking-result {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 0.65rem 0.75rem;
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: #0f172a;
+}
+
+.matchmaking-result p {
+  margin: 0 0 0.3rem;
+}
+
+.matchmaking-result p:last-child {
+  margin-bottom: 0;
+}
+
+.match-error {
+  color: #b91c1c;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
 @media (max-width: 980px) {
   .admin-grid {
     grid-template-columns: 1fr;
@@ -530,6 +599,23 @@
       "list"
       "form"
       "map";
+    min-height: unset;
+  }
+
+  /* en móvil el mapa no es sticky, fluye normal */
+  .people-map-card {
+    position: static;
+    max-height: none;
+  }
+
+  .people-map-wrap {
+    min-height: 300px;
+    flex: none;
+    height: 300px;
+  }
+
+  .people-map {
+    height: 300px;
   }
 
   .internal-map-consult-layout {

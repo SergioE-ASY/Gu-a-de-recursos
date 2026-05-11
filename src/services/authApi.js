@@ -77,13 +77,15 @@ async function loginAgainstMock(credentials) {
 
 export async function login(credentials) {
   if (AUTH_BASE_URL) {
-    try {
-      const session = await loginAgainstApi(credentials);
-      persistSession(session);
-      return session;
-    } catch (error) {
-      if (!ENABLE_MOCK_AUTH) throw error;
-    }
+    // Con URL configurada, cualquier fallo de API se lanza directamente — sin fallback al mock
+    const session = await loginAgainstApi(credentials);
+    persistSession(session);
+    return session;
+  }
+
+  // Sin URL configurada, solo se permite mock si ENABLE_MOCK_AUTH está activo
+  if (!ENABLE_MOCK_AUTH) {
+    throw new Error("No hay URL de autenticacion configurada y el mock esta deshabilitado");
   }
 
   const mockSession = await loginAgainstMock(credentials);

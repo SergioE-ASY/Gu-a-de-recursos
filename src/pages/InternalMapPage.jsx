@@ -6,6 +6,7 @@ import "../App.css";
 import { getPersistedSession, logout } from "../services/authApi";
 import { fetchResources } from "../services/resourcesApi";
 import { listInternalPeople, TYPE_COLORS as peopleTypeColors } from "../services/internalPeopleApi";
+import { isMobileViewport, normalizePersonIcon, normalizeText } from "../utils/mapUtils";
 
 const defaultCenter = [27.74216081251307, -18.008738423478977];
 const resultsPerPage = 12;
@@ -53,11 +54,6 @@ const PEOPLE_LABELS = {
   recurso: "Persona Recurso",
 };
 
-function isMobileViewport() {
-  if (typeof window === "undefined") return false;
-  return window.matchMedia("(max-width: 980px)").matches;
-}
-
 function createEmptyFilters() {
   return filterConfig.reduce((acc, item) => {
     acc[item.key] = [];
@@ -75,19 +71,6 @@ function getValuesFromResource(resource, key) {
 function normalizeMarkerIcon(iconName) {
   if (!iconName) return "/assets/icons/map_markers/salud.png";
   return `/assets/icons/map_markers/${iconName}.png`;
-}
-
-function normalizePersonIcon(type) {
-  const iconUrl = `/assets/icons/map_markers/persona_${type}.svg`;
-  const size = [54, 54];
-  const anchor = [27, 54];
-
-  return L.icon({
-    iconUrl,
-    iconSize: size,
-    iconAnchor: anchor,
-    popupAnchor: [0, -size[1] / 2],
-  });
 }
 
 function FlyToTarget({ target }) {
@@ -230,11 +213,10 @@ function InternalMapPage() {
   }, [filteredResources, filteredPeople]);
 
   const searchedItems = useMemo(() => {
-    const normalize = (str) => str?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") ?? "";
-    const term = normalize(search.trim());
+    const term = normalizeText(search.trim());
     if (!term) return allSearchItems;
     return allSearchItems.filter(
-        (item) => normalize(item.label).includes(term) || normalize(item.subtitle).includes(term)
+        (item) => normalizeText(item.label).includes(term) || normalizeText(item.subtitle).includes(term)
     );
   }, [allSearchItems, search]);
 

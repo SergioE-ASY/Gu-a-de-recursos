@@ -4,6 +4,7 @@ import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 import L from "leaflet";
 import "../App.css";
 import { fetchResources } from "../services/resourcesApi";
+import { isMobileViewport, normalizeText } from "../utils/mapUtils";
 
 const defaultCenter = [27.74216081251307, -18.008738423478977];
 const NEEDS_FILTER_KEY = "need";
@@ -425,11 +426,6 @@ const tileLayers = {
   },
 };
 
-function isMobileViewport() {
-  if (typeof window === "undefined") return false;
-  return window.matchMedia("(max-width: 980px)").matches;
-}
-
 function createEmptyFilters() {
   return filterConfig.reduce((acc, item) => {
     acc[item.key] = [];
@@ -818,17 +814,16 @@ function PublicMapPage() {
   }, [resources, appliedFilters, userPosition]);
 
   const filteredResources = useMemo(() => {
-    // Normaliza quitando tildes y pasando a minúsculas
-    const normalize = (str) => str?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") ?? "";
-    const term = normalize(search.trim());
+    const term = normalizeText(search.trim());
     if (!term) return resourcesAfterCategoryFilter;
-    return resourcesAfterCategoryFilter.filter((item) => normalize(item.tit).includes(term));
+    return resourcesAfterCategoryFilter.filter((item) => normalizeText(item.tit).includes(term));
   }, [resourcesAfterCategoryFilter, search]);
 
+  // Busca en el array completo para que la ficha no desaparezca al cambiar filtros
   const selectedResource = useMemo(() => {
     if (selectedResourceId === null) return null;
-    return filteredResources.find((item) => item.id === selectedResourceId) ?? null;
-  }, [filteredResources, selectedResourceId]);
+    return resources.find((item) => item.id === selectedResourceId) ?? null;
+  }, [resources, selectedResourceId]);
 
   const activeFilterCount = useMemo(
     () => Object.values(appliedFilters).reduce((total, values) => total + values.length, 0),

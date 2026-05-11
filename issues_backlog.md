@@ -17,12 +17,14 @@ Este documento centraliza las tareas pendientes y en curso para la mejora de la 
 - **Prioridad**: Media
 
 ---
+
 ### 3. Corrección de búsqueda sin tildes
 - **Descripción**: El filtro de búsqueda no encontraba recursos al escribir sin tildes (ej: "medico" no encontraba "médico"). Se normaliza el texto eliminando diacríticos antes de comparar.
 - **Estado**: Completada
 - **Prioridad**: Media
 
 ---
+
 ### 4. Bugs críticos detectados por análisis de código
 
 #### 4.1 CircleMarker no importado
@@ -51,17 +53,17 @@ Este documento centraliza las tareas pendientes y en curso para la mejora de la 
 
 #### 5.2 selectedResource se busca en filteredResources
 - **Descripción**: Si el usuario selecciona un recurso y cambia los filtros, la ficha lateral desaparece. Debería buscarse en todos los recursos.
-- **Estado**: Pendiente
+- **Estado**: Completada
 - **Prioridad**: Media
 
 #### 5.3 Fallback silencioso a mock en login
 - **Descripción**: Si la API real falla, el login cae al mock sin avisar. Un usuario puede autenticarse con credenciales de demo con API real configurada.
-- **Estado**: Pendiente
+- **Estado**: Completada
 - **Prioridad**: Media
 
 #### 5.4 Array vacío de API tratado como fallo
 - **Descripción**: En `internalPeopleApi.js`, si la API devuelve 0 resultados (válido), cae al mock como si fuera un error.
-- **Estado**: Pendiente
+- **Estado**: Completada
 - **Prioridad**: Media
 
 ---
@@ -70,17 +72,17 @@ Este documento centraliza las tareas pendientes y en curso para la mejora de la 
 
 #### 6.1 Credenciales hardcodeadas en bundle
 - **Descripción**: Contraseñas de usuarios mock incluidas en el bundle JavaScript público. Cualquiera puede leerlas inspeccionando el bundle.
-- **Estado**: Pendiente
+- **Estado**: Pendiente (consultar con Sergio, posiblemente pdt x bd mas back)
 - **Prioridad**: Alta
 
 #### 6.2 Token mock predecible
 - **Descripción**: El token `mock-token-${username}` es trivialmente falsificable.
-- **Estado**: Pendiente
+- **Estado**: Pendiente (consultar con Sergio, posiblemente pdt x bd mas back)
 - **Prioridad**: Alta
 
 #### 6.3 Datos personales en localStorage sin protección
 - **Descripción**: Nombres, teléfonos y emails de usuarias se guardan en texto plano en localStorage.
-- **Estado**: Pendiente
+- **Estado**: Pendiente (consultar con Sergio, posiblemente pdt x bd mas back) 
 - **Prioridad**: Alta
 
 ---
@@ -89,12 +91,12 @@ Este documento centraliza las tareas pendientes y en curso para la mejora de la 
 
 #### 7.1 Colores de tipos de persona todos en negro
 - **Descripción**: `peopleTypeColors` tiene #000000 para los tres tipos, la leyenda del mapa es inútil.
-- **Estado**: Completado
+- **Estado**: Completada
 - **Prioridad**: Media
 
 #### 7.2 Código duplicado entre páginas
 - **Descripción**: Funciones como `normalizePersonIcon`, `getValuesFromResource`, `isMobileViewport` están copiadas en múltiples páginas. Extraer a módulos compartidos.
-- **Estado**: Pendiente
+- **Estado**: Completada
 - **Prioridad**: Baja
 
 #### 7.3 FlyToResource sin validación de coordenadas
@@ -104,5 +106,27 @@ Este documento centraliza las tareas pendientes y en curso para la mejora de la 
 
 #### 7.4 Búsqueda en admin sin normalización de tildes
 - **Descripción**: El filtro de búsqueda en `AdminPortalPage.jsx` no normaliza tildes, a diferencia del resto de la app.
-- **Estado**: Completado
+- **Estado**: Completada
 - **Prioridad**: Media
+
+---
+
+### 8. Mejoras visuales en Guía Interna de Personas
+- **Descripción**: Corrección de colores en leyenda del mapa (usaban negro en lugar de los colores reales por tipo), límite de ancho en formulario de persona-recurso y ajuste de layout del grid interno.
+- **Estado**: Completada
+- **Prioridad**: Media
+
+---
+
+### 9. Layout mapa junto al formulario en InternalPeopleGuidePage
+- **Descripción**: El mapa aparecía debajo del formulario en lugar de al lado. Se rediseñó el grid a 3 columnas (lista | formulario | mapa) con el mapa sticky y altura fija para que Leaflet lo renderice correctamente.
+- **Estado**: Completada
+- **Prioridad**: Media
+
+---
+
+### 10. Agente de Matchmaking con IA
+- **Descripción**: Sugerir recursos cercanos a una usuaria usando la API de Claude. Implementado en `src/services/matchmakingApi.js` con cálculo de distancia Haversine (radio 20 km) y panel de resultados integrado en la ficha de persona, disponible en ambos modos (consulta y gestión). La llamada a la API pasa por el proxy de Vite para evitar CORS.
+- **Estado**: Implementada — pendiente de activar en producción
+- **Prioridad**: Media
+- **Pendiente**: Configurar `VITE_ANTHROPIC_API_KEY` en `.env` (nunca subir al repo). En producción mover la llamada a un endpoint de backend para no exponer la key en el bundle. Mientras tanto muestra mensaje informativo al usuario.
