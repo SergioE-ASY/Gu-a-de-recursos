@@ -127,6 +127,115 @@ Este documento centraliza las tareas pendientes y en curso para la mejora de la 
 
 ### 10. Agente de Matchmaking con IA
 - **Descripción**: Sugerir recursos cercanos a una usuaria usando la API de Claude. Implementado en `src/services/matchmakingApi.js` con cálculo de distancia Haversine (radio 20 km) y panel de resultados integrado en la ficha de persona, disponible en ambos modos (consulta y gestión). La llamada a la API pasa por el proxy de Vite para evitar CORS.
-- **Estado**: Implementada — pendiente de activar en producción
+- **Estado**: Implementada — pendiente de activar en producción la API
 - **Prioridad**: Media
 - **Pendiente**: Configurar `VITE_ANTHROPIC_API_KEY` en `.env` (nunca subir al repo). En producción mover la llamada a un endpoint de backend para no exponer la key en el bundle. Mientras tanto muestra mensaje informativo al usuario.
+
+---
+
+### 11. Regresión bug 5.1: keyword "no" sigue en InternalMapPage.jsx
+
+- **Descripción**: `ACCESS_KEYWORDS["libre-acceso"]` en `InternalMapPage.jsx` (línea 22) sigue incluyendo `"no"` como keyword, generando los mismos falsos positivos del bug 5.1. El fix se aplicó en `PublicMapPage.jsx` pero no se propagó a `InternalMapPage.jsx`.
+- **Estado**: Completada
+- **Prioridad**: Media
+
+---
+
+### 12. InternalMapPage: marcadores de recursos sin validación de coordenadas
+
+- **Descripción**: En `InternalMapPage.jsx` los `<Marker>` de recursos (líneas 425–450) se renderizan sin comprobar `isValidCoord(resource.lat, resource.lng)`. Si un recurso carece de coordenadas válidas, Leaflet lanza un error y rompe la página. El mismo patrón ya se corrigió en las otras páginas (bug 4.2), pero quedó sin aplicar aquí.
+- **Estado**: Completada
+- **Prioridad**: Alta
+
+---
+
+### 13. MatchmakingPanel definido dentro del componente padre
+
+- **Descripción**: `MatchmakingPanel` se declara como función dentro de `InternalPeopleGuidePage` (línea 253). React crea una referencia de componente nueva en cada render del padre, forzando un remount completo del panel en cada interacción. Debe extraerse fuera del componente padre como componente de nivel módulo, recibiendo los estados necesarios por props.
+- **Estado**: Pendiente
+- **Prioridad**: Media
+
+---
+
+### 14. Estado de matchmaking no se limpia al cambiar de persona
+
+- **Descripción**: Al abrir la ficha de una persona distinta (`openPersonSheet`), `matchSuggestions` y `matchError` del estado anterior permanecen visibles. El usuario ve sugerencias de IA de la persona anterior hasta que lanza una nueva consulta. Debería limpiarse al cambiar de persona seleccionada.
+- **Estado**: Completada
+- **Prioridad**: Media
+
+---
+
+### 15. Botones toggle sin aria-pressed
+
+- **Descripción**: Los botones de filtro tipo toggle (filtros de recursos, vista mapa/satélite, tipos de persona) indican su estado activo solo mediante clase CSS. Sin `aria-pressed="true/false"`, los lectores de pantalla no comunican si el botón está activado o desactivado. Afecta a `PublicMapPage.jsx`, `InternalMapPage.jsx` e `InternalPeopleGuidePage.jsx`.
+- **Estado**: Pendiente
+- **Prioridad**: Media
+
+---
+
+### 16. Drawer overlay inaccesible desde teclado
+
+- **Descripción**: El `<div className="drawer-overlay">` solo responde a eventos `onClick`. Usuarios de teclado no pueden cerrar el drawer con Escape ni haciendo clic en el fondo. Falta añadir `role="button"`, `aria-label="Cerrar filtros"` y un listener `onKeyDown` para la tecla Escape (o manejar el foco correctamente con un trap de foco dentro del drawer). Afecta a `PublicMapPage.jsx` e `InternalMapPage.jsx`.
+- **Estado**: Pendiente
+- **Prioridad**: Media
+
+---
+
+### 17. Funciones helper duplicadas pendientes de extraer a mapUtils.js
+
+- **Descripción**: Tras el refactor de la tarea 7.2 quedan duplicaciones sin resolver:
+  - `normalizeMarkerIcon`: copiada en `PublicMapPage.jsx` e `InternalMapPage.jsx` (no existe en `mapUtils.js`).
+  - `isValidCoord`: copiada en `PublicMapPage.jsx` e `InternalPeopleGuidePage.jsx` (no existe en `mapUtils.js`).
+  - `getValuesFromResource`: copiada en `PublicMapPage.jsx` e `InternalMapPage.jsx` (no existe en `mapUtils.js`).
+  - `renderArrayItems`: copiada en `InternalMapPage.jsx` e `InternalPeopleGuidePage.jsx`.
+  - `PEOPLE_LABELS`: duplicada en `InternalMapPage.jsx` e `InternalPeopleGuidePage.jsx`.
+- **Estado**: Pendiente
+- **Prioridad**: Baja
+
+---
+
+### 18. L.icon() instanciado en cada render del mapa
+
+- **Descripción**: En `PublicMapPage.jsx` (línea 1051) e `InternalMapPage.jsx` (línea 429), `L.icon({...})` se crea dentro del `.map()` del JSX, generando un nuevo objeto por marcador en cada render del componente. Con un catálogo grande de recursos esto supone trabajo innecesario. Los iconos deberían memoizarse (por ejemplo con un `Map<iconName, L.Icon>` o `useMemo`).
+- **Estado**: Pendiente
+- **Prioridad**: Baja
+
+---
+
+### 19. Validación de lat/lng antes de submit en formularios de edición
+
+- **Descripción**: En `handleSave` de `InternalPeopleGuidePage.jsx` y `AdminPortalPage.jsx`, `Number(form.lat)` devuelve `0` si el campo está vacío y `NaN` si contiene texto no numérico — ambos son inválidos para Leaflet y para la API. Los atributos `required` de HTML no previenen todos los casos (p. ej., valor `0` pasa la validación nativa). Falta añadir una comprobación explícita de que las coordenadas son números finitos en rango válido antes de enviar.
+- **Estado**: Pendiente
+- **Prioridad**: Media
+
+---
+
+### 20. resource.web renderizado sin validación de protocolo
+
+- **Descripción**: En `PublicMapPage.jsx` (línea 595), `<a href={resource.web}>` se renderiza directamente sin verificar que la URL sea segura. Si el dato contiene `javascript:` u otro protocolo peligroso, es un vector XSS. Debería validarse que `resource.web` comience por `https://` o `http://` antes de usarlo como href (o usar `rel="noreferrer noopener"` y filtrar protocolos no-http).
+- **Estado**: Pendiente
+- **Prioridad**: Media
+
+---
+
+### 21. isMobileViewport() no se actualiza al redimensionar la ventana
+
+- **Descripción**: `isResultsPanelOpen` se inicializa una vez con `isMobileViewport()` pero no hay ningún listener de `resize`/`matchMedia` que lo actualice. Si el usuario rota el dispositivo o redimensiona la ventana entre móvil y escritorio, el panel de resultados queda en un estado inconsistente. Debería suscribirse al cambio de media query o recalcular en el efecto adecuado.
+- **Estado**: Pendiente
+- **Prioridad**: Baja
+
+---
+
+### 22. ID de modelo Claude desactualizado en matchmakingApi.js
+
+- **Descripción**: `matchmakingApi.js` (línea 86) usa `"claude-sonnet-4-20250514"`, que no es un ID de modelo válido en la API de Anthropic. El identificador correcto para Claude Sonnet 4.5 es `"claude-sonnet-4-5-20251001"`. Con el ID incorrecto las llamadas a la API fallarán con un error 404/400 en producción.
+- **Estado**: Completada
+- **Prioridad**: Alta
+
+---
+
+### 23. activeFilterCount en InternalMapPage cuenta filtros de persona incorrectamente
+
+- **Descripción**: `InternalMapPage.jsx` (líneas 226–230) suma los tipos de persona cuyo filtro es `true` (activos/visibles). En el estado inicial los tres están a `true`, por lo que el contador arranca en 3 aunque no haya ningún filtro aplicado. Debería contar los tipos desactivados (los que no se muestran), o bien excluir el conteo de personas del indicador de filtros activos.
+- **Estado**: Pendiente
+- **Prioridad**: Baja

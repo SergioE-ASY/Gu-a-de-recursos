@@ -19,7 +19,7 @@ const ACCESS_FILTER_OPTIONS = [
 ];
 
 const ACCESS_KEYWORDS = {
-  "libre-acceso": ["no", "sin requisitos", "libre", "libre acceso", "abierto publico"],
+  "libre-acceso": ["sin requisitos", "libre", "libre acceso", "abierto publico"],
   "cita-previa": ["cita", "cita previa", "solicitar cita"],
   "derivacion-profesional": ["derivación", "derivacion", "profesional", "servicios sociales", "sanitarios", "derivado"],
   "valoracion-tecnica": ["valoración", "valoracion", "técnica", "tecnica", "evaluación", "evaluacion"],
@@ -43,7 +43,7 @@ const tileLayers = {
   satellite: {
     url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
     attribution:
-      "Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community",
+        "Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community",
     maxZoom: 20,
   },
 };
@@ -77,6 +77,9 @@ function FlyToTarget({ target }) {
   const map = useMap();
   useEffect(() => {
     if (!target) return;
+    // Validar coordenadas antes de llamar a setView para evitar que Leaflet falle
+    if (typeof target.lat !== "number" || typeof target.lng !== "number" ||
+        isNaN(target.lat) || isNaN(target.lng)) return;
     map.setView([target.lat, target.lng], 15, { animate: true });
   }, [map, target]);
   return null;
@@ -85,17 +88,17 @@ function FlyToTarget({ target }) {
 function renderArrayItems(items, emptyLabel = "Sin datos") {
   if (!items || items.length === 0) {
     return (
-      <ul>
-        <li>{emptyLabel}</li>
-      </ul>
+        <ul>
+          <li>{emptyLabel}</li>
+        </ul>
     );
   }
   return (
-    <ul>
-      {items.map((item) => (
-        <li key={item}>{item}</li>
-      ))}
-    </ul>
+      <ul>
+        {items.map((item) => (
+            <li key={item}>{item}</li>
+        ))}
+      </ul>
   );
 }
 
@@ -227,8 +230,8 @@ function InternalMapPage() {
   }, [resourceFilters, peopleTypeFilter]);
 
   const totalResultsPages = useMemo(
-    () => Math.max(1, Math.ceil(searchedItems.length / resultsPerPage)),
-    [searchedItems.length]
+      () => Math.max(1, Math.ceil(searchedItems.length / resultsPerPage)),
+      [searchedItems.length]
   );
 
   const pagedItems = useMemo(() => {
@@ -245,8 +248,8 @@ function InternalMapPage() {
     setResourceFilters((prev) => {
       const currentValues = prev[filterKey] ?? [];
       const nextValues = currentValues.includes(value)
-        ? currentValues.filter((item) => item !== value)
-        : [...currentValues, value];
+          ? currentValues.filter((item) => item !== value)
+          : [...currentValues, value];
       return { ...prev, [filterKey]: nextValues };
     });
   }
@@ -275,257 +278,262 @@ function InternalMapPage() {
   }
 
   return (
-    <div className="app-shell">
-      <header className="top-bar">
-        <div className="brand-block">
-          <h1>Mapa interno</h1>
-          <p className="meta">Origen de datos: {sourceLabel}</p>
-        </div>
-        <div className="search-block">
-          <input
-            type="text"
-            placeholder="Buscar personas o recursos..."
-            aria-label="Buscar personas o recursos"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-          />
-        </div>
-        <div className="actions-block">
-          <button type="button" onClick={() => setIsFilterDrawerOpen(true)}>
-            Filtros ({activeFilterCount})
-          </button>
-          <button type="button" onClick={() => setIsResultsPanelOpen((prev) => !prev)}>
-            {isResultsPanelOpen ? "Ocultar resultados" : "Ver resultados"}
-          </button>
-          <Link className="admin-link" to="/admin">
-            Dashboard
-          </Link>
-          <button type="button" onClick={handleLogout}>
-            Salir
-          </button>
-        </div>
-      </header>
-
-      <div className="status-strip">
-        <p>Resultados: {searchedItems.length} | Pagina {currentResultsPage}/{totalResultsPages}</p>
-        <div className="map-view-toggle" role="group" aria-label="Cambiar vista del mapa">
-          <button
-            type="button"
-            className={mapViewMode === "map" ? "active" : ""}
-            onClick={() => setMapViewMode("map")}
-          >
-            Mapa
-          </button>
-          <button
-            type="button"
-            className={mapViewMode === "satellite" ? "active" : ""}
-            onClick={() => setMapViewMode("satellite")}
-          >
-            Satelite
-          </button>
-        </div>
-      </div>
-
-      {loading && <p className="floating-message">Cargando datos internos...</p>}
-      {error && <p className="floating-message error">{error}</p>}
-
-      <aside className={isFilterDrawerOpen ? "filters-drawer open" : "filters-drawer"}>
-        <div className="filters-header-row">
-          <h2>Filtros</h2>
-          <button type="button" className="ghost" onClick={() => setIsFilterDrawerOpen(false)}>
-            Cerrar
-          </button>
-        </div>
-        <div className="filters-actions">
-          <button type="button" className="ghost" onClick={clearAllFilters}>
-            Limpiar
-          </button>
-        </div>
-        <details className="filter-group" open>
-          <summary>Personas</summary>
-          <div className="options-grid">
-            {["usuaria", "potencial", "recurso"].map((type) => (
-              <button
-                key={type}
-                type="button"
-                className={peopleTypeFilter[type] ? "option active" : "option"}
-                onClick={() => togglePeopleType(type)}
-              >
-                {PEOPLE_LABELS[type] || type}
-              </button>
-            ))}
+      <div className="app-shell">
+        <header className="top-bar">
+          <div className="brand-block">
+            <h1>Mapa interno</h1>
+            <p className="meta">Origen de datos: {sourceLabel}</p>
           </div>
-        </details>
-        {filterConfig.map((filterItem) => (
-          <details key={filterItem.key} className="filter-group">
-            <summary>
-              {filterItem.label}
-              <span className="chip">{(resourceFilters[filterItem.key] ?? []).length}</span>
-            </summary>
+          <div className="search-block">
+            <input
+                type="text"
+                placeholder="Buscar personas o recursos..."
+                aria-label="Buscar personas o recursos"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+            />
+          </div>
+          <div className="actions-block">
+            <button type="button" onClick={() => setIsFilterDrawerOpen(true)}>
+              Filtros ({activeFilterCount})
+            </button>
+            <button type="button" onClick={() => setIsResultsPanelOpen((prev) => !prev)}>
+              {isResultsPanelOpen ? "Ocultar resultados" : "Ver resultados"}
+            </button>
+            <Link className="admin-link" to="/admin">
+              Dashboard
+            </Link>
+            <button type="button" onClick={handleLogout}>
+              Salir
+            </button>
+          </div>
+        </header>
+
+        <div className="status-strip">
+          <p>Resultados: {searchedItems.length} | Pagina {currentResultsPage}/{totalResultsPages}</p>
+          <div className="map-view-toggle" role="group" aria-label="Cambiar vista del mapa">
+            <button
+                type="button"
+                className={mapViewMode === "map" ? "active" : ""}
+                onClick={() => setMapViewMode("map")}
+            >
+              Mapa
+            </button>
+            <button
+                type="button"
+                className={mapViewMode === "satellite" ? "active" : ""}
+                onClick={() => setMapViewMode("satellite")}
+            >
+              Satelite
+            </button>
+          </div>
+        </div>
+
+        {loading && <p className="floating-message">Cargando datos internos...</p>}
+        {error && <p className="floating-message error">{error}</p>}
+
+        <aside className={isFilterDrawerOpen ? "filters-drawer open" : "filters-drawer"}>
+          <div className="filters-header-row">
+            <h2>Filtros</h2>
+            <button type="button" className="ghost" onClick={() => setIsFilterDrawerOpen(false)}>
+              Cerrar
+            </button>
+          </div>
+          <div className="filters-actions">
+            <button type="button" className="ghost" onClick={clearAllFilters}>
+              Limpiar
+            </button>
+          </div>
+          <details className="filter-group" open>
+            <summary>Personas</summary>
             <div className="options-grid">
-              {(filterOptions[filterItem.key] ?? []).map((value) => (
-                <button
-                  key={value}
-                  type="button"
-                  className={(resourceFilters[filterItem.key] ?? []).includes(typeof value === 'object' ? value.value : value) ? "option active" : "option"}
-                  onClick={() => toggleResourceFilter(filterItem.key, typeof value === 'object' ? value.value : value)}
-                >
-                  {typeof value === 'object' ? value.label : value}
-                </button>
+              {["usuaria", "potencial", "recurso"].map((type) => (
+                  <button
+                      key={type}
+                      type="button"
+                      className={peopleTypeFilter[type] ? "option active" : "option"}
+                      onClick={() => togglePeopleType(type)}
+                  >
+                    {PEOPLE_LABELS[type] || type}
+                  </button>
               ))}
             </div>
           </details>
-        ))}
-      </aside>
-
-      {isFilterDrawerOpen && <div className="drawer-overlay" onClick={() => setIsFilterDrawerOpen(false)} />}
-
-      {isResultsPanelOpen && (
-        <aside className="results-panel">
-          <ul className="resource-list">
-            {pagedItems.map((item) => (
-              <li key={item.id}>
-                <button type="button" onClick={() => handleSelectItem(item)}>
-                  {item.label}
-                  <br />
-                  <small>{item.subtitle}</small>
-                </button>
-              </li>
-            ))}
-          </ul>
-          <div className="pagination">
-            <button
-              type="button"
-              onClick={() => setCurrentResultsPage((prev) => Math.max(1, prev - 1))}
-              disabled={currentResultsPage <= 1}
-            >
-              Anterior
-            </button>
-            <button
-              type="button"
-              onClick={() => setCurrentResultsPage((prev) => Math.min(totalResultsPages, prev + 1))}
-              disabled={currentResultsPage >= totalResultsPages}
-            >
-              Siguiente
-            </button>
-          </div>
+          {filterConfig.map((filterItem) => (
+              <details key={filterItem.key} className="filter-group">
+                <summary>
+                  {filterItem.label}
+                  <span className="chip">{(resourceFilters[filterItem.key] ?? []).length}</span>
+                </summary>
+                <div className="options-grid">
+                  {(filterOptions[filterItem.key] ?? []).map((value) => (
+                      <button
+                          key={value}
+                          type="button"
+                          className={(resourceFilters[filterItem.key] ?? []).includes(typeof value === 'object' ? value.value : value) ? "option active" : "option"}
+                          onClick={() => toggleResourceFilter(filterItem.key, typeof value === 'object' ? value.value : value)}
+                      >
+                        {typeof value === 'object' ? value.label : value}
+                      </button>
+                  ))}
+                </div>
+              </details>
+          ))}
         </aside>
-      )}
 
-      <main className="map-wrapper">
-        <MapContainer center={defaultCenter} zoom={11} className="map">
-          <TileLayer
-            attribution={tileLayers[mapViewMode].attribution}
-            url={tileLayers[mapViewMode].url}
-            maxZoom={tileLayers[mapViewMode].maxZoom}
-          />
-          {filteredResources.map((resource) => (
-            <Marker
-              key={`resource-${resource.id}`}
-              position={[resource.lat, resource.lng]}
-              icon={L.icon({
-                iconUrl: normalizeMarkerIcon(resource.map_marker_icon),
-                iconSize: [32, 37],
-                iconAnchor: [16, 37],
-              })}
-              eventHandlers={{
-                click: () =>
-                  setSelectedTarget({
-                    kind: "resource",
-                    lat: resource.lat,
-                    lng: resource.lng,
-                    data: resource,
-                  }),
-              }}
-            >
-              <Popup>
-                <strong>{resource.tit}</strong>
-                <br />
-                Recurso
-              </Popup>
-            </Marker>
-          ))}
+        {isFilterDrawerOpen && <div className="drawer-overlay" onClick={() => setIsFilterDrawerOpen(false)} />}
 
-          {filteredPeople.map((person) => (
-            <Marker
-              key={`person-${person.id}`}
-              position={[person.lat, person.lng]}
-              icon={normalizePersonIcon(person.tipo)}
-              zIndexOffset={1000}
-              eventHandlers={{
-                click: () =>
-                  setSelectedTarget({
-                    kind: "person",
-                    lat: person.lat,
-                    lng: person.lng,
-                    data: person,
-                  }),
-              }}
-            >
-              <Popup>
-                <strong>{person.nombre}</strong>
-                <br />
-                {PEOPLE_LABELS[person.tipo] || person.tipo} · {person.zona}
-              </Popup>
-            </Marker>
-          ))}
-
-          <FlyToTarget target={selectedTarget} />
-        </MapContainer>
-
-        {selectedTarget && (
-          <aside className="resource-sheet" role="dialog">
-            <div className="resource-sheet-header">
-              <h2>{selectedTarget.kind === "person" ? selectedTarget.data.nombre : selectedTarget.data.tit}</h2>
-              <button type="button" onClick={() => setSelectedTarget(null)}>
-                Cerrar
-              </button>
-            </div>
-
-            {selectedTarget.kind === "person" ? (
-              <>
-                <section>
-                  <h3>Datos basicos</h3>
-                  <div className="sheet-row"><strong>Tipo:</strong><p>{PEOPLE_LABELS[selectedTarget.data.tipo] || selectedTarget.data.tipo}</p></div>
-                  <div className="sheet-row"><strong>Zona:</strong><p>{selectedTarget.data.zona}</p></div>
-                  <div className="sheet-row"><strong>Telefono:</strong><p>{selectedTarget.data.telefono || "Sin telefono"}</p></div>
-                  <div className="sheet-row"><strong>Email:</strong><p>{selectedTarget.data.email || "Sin email"}</p></div>
-                  <div className="sheet-row"><strong>Geolocalizacion:</strong><p>{selectedTarget.data.lat}, {selectedTarget.data.lng}</p></div>
-                </section>
-                <section>
-                  <h3>Relaciones activas</h3>
-                  {renderArrayItems(selectedTarget.data.relacionesActivas, "Sin relaciones activas")}
-                </section>
-                <section>
-                  <h3>Relaciones inactivas</h3>
-                  {renderArrayItems(selectedTarget.data.relacionesInactivas, "Sin relaciones inactivas")}
-                </section>
-                <section>
-                  <h3>Historial acuerdos y colaboraciones</h3>
-                  {renderArrayItems(selectedTarget.data.historialAcuerdos, "Sin historial")}
-                </section>
-              </>
-            ) : (
-              <>
-                <section>
-                  <h3>Ficha del recurso</h3>
-                  <div className="sheet-row"><strong>Nombre:</strong><p>{selectedTarget.data.tit}</p></div>
-                  <div className="sheet-row"><strong>Direccion:</strong><p>{selectedTarget.data.dir || "Sin direccion"}</p></div>
-                  <div className="sheet-row"><strong>Ambito:</strong><p>{selectedTarget.data.amb || "Sin ambito"}</p></div>
-                  <div className="sheet-row"><strong>Tipo:</strong><p>{selectedTarget.data.tip || "Sin tipo"}</p></div>
-                  <div className="sheet-row"><strong>¿Cómo acceder?:</strong>{renderArrayItems(selectedTarget.data.req_acc, "Sin requisitos")}</div>
-                  <div className="sheet-row"><strong>Geolocalizacion:</strong><p>{selectedTarget.data.lat}, {selectedTarget.data.lng}</p></div>
-                </section>
-                <section>
-                  <h3>Descripcion del servicio</h3>
-                  {renderArrayItems(selectedTarget.data.des_ser, "Sin descripcion")}
-                </section>
-              </>
-            )}
-          </aside>
+        {isResultsPanelOpen && (
+            <aside className="results-panel">
+              <ul className="resource-list">
+                {pagedItems.map((item) => (
+                    <li key={item.id}>
+                      <button type="button" onClick={() => handleSelectItem(item)}>
+                        {item.label}
+                        <br />
+                        <small>{item.subtitle}</small>
+                      </button>
+                    </li>
+                ))}
+              </ul>
+              <div className="pagination">
+                <button
+                    type="button"
+                    onClick={() => setCurrentResultsPage((prev) => Math.max(1, prev - 1))}
+                    disabled={currentResultsPage <= 1}
+                >
+                  Anterior
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setCurrentResultsPage((prev) => Math.min(totalResultsPages, prev + 1))}
+                    disabled={currentResultsPage >= totalResultsPages}
+                >
+                  Siguiente
+                </button>
+              </div>
+            </aside>
         )}
-      </main>
-    </div>
+
+        <main className="map-wrapper">
+          <MapContainer center={defaultCenter} zoom={11} className="map">
+            <TileLayer
+                attribution={tileLayers[mapViewMode].attribution}
+                url={tileLayers[mapViewMode].url}
+                maxZoom={tileLayers[mapViewMode].maxZoom}
+            />
+            {filteredResources.map((resource) => {
+                // Omitir marcadores con coordenadas inválidas
+                if (typeof resource.lat !== "number" || typeof resource.lng !== "number" ||
+                    isNaN(resource.lat) || isNaN(resource.lng)) return null;
+                return (
+                <Marker
+                    key={`resource-${resource.id}`}
+                    position={[resource.lat, resource.lng]}
+                    icon={L.icon({
+                      iconUrl: normalizeMarkerIcon(resource.map_marker_icon),
+                      iconSize: [32, 37],
+                      iconAnchor: [16, 37],
+                    })}
+                    eventHandlers={{
+                      click: () =>
+                          setSelectedTarget({
+                            kind: "resource",
+                            lat: resource.lat,
+                            lng: resource.lng,
+                            data: resource,
+                          }),
+                    }}
+                >
+                  <Popup>
+                    <strong>{resource.tit}</strong>
+                    <br />
+                    Recurso
+                  </Popup>
+                </Marker>
+                );
+            })}
+
+            {filteredPeople.map((person) => (
+                <Marker
+                    key={`person-${person.id}`}
+                    position={[person.lat, person.lng]}
+                    icon={normalizePersonIcon(person.tipo)}
+                    zIndexOffset={1000}
+                    eventHandlers={{
+                      click: () =>
+                          setSelectedTarget({
+                            kind: "person",
+                            lat: person.lat,
+                            lng: person.lng,
+                            data: person,
+                          }),
+                    }}
+                >
+                  <Popup>
+                    <strong>{person.nombre}</strong>
+                    <br />
+                    {PEOPLE_LABELS[person.tipo] || person.tipo} · {person.zona}
+                  </Popup>
+                </Marker>
+            ))}
+
+            <FlyToTarget target={selectedTarget} />
+          </MapContainer>
+
+          {selectedTarget && (
+              <aside className="resource-sheet" role="dialog">
+                <div className="resource-sheet-header">
+                  <h2>{selectedTarget.kind === "person" ? selectedTarget.data.nombre : selectedTarget.data.tit}</h2>
+                  <button type="button" onClick={() => setSelectedTarget(null)}>
+                    Cerrar
+                  </button>
+                </div>
+
+                {selectedTarget.kind === "person" ? (
+                    <>
+                      <section>
+                        <h3>Datos basicos</h3>
+                        <div className="sheet-row"><strong>Tipo:</strong><p>{PEOPLE_LABELS[selectedTarget.data.tipo] || selectedTarget.data.tipo}</p></div>
+                        <div className="sheet-row"><strong>Zona:</strong><p>{selectedTarget.data.zona}</p></div>
+                        <div className="sheet-row"><strong>Telefono:</strong><p>{selectedTarget.data.telefono || "Sin telefono"}</p></div>
+                        <div className="sheet-row"><strong>Email:</strong><p>{selectedTarget.data.email || "Sin email"}</p></div>
+                        <div className="sheet-row"><strong>Geolocalizacion:</strong><p>{selectedTarget.data.lat}, {selectedTarget.data.lng}</p></div>
+                      </section>
+                      <section>
+                        <h3>Relaciones activas</h3>
+                        {renderArrayItems(selectedTarget.data.relacionesActivas, "Sin relaciones activas")}
+                      </section>
+                      <section>
+                        <h3>Relaciones inactivas</h3>
+                        {renderArrayItems(selectedTarget.data.relacionesInactivas, "Sin relaciones inactivas")}
+                      </section>
+                      <section>
+                        <h3>Historial acuerdos y colaboraciones</h3>
+                        {renderArrayItems(selectedTarget.data.historialAcuerdos, "Sin historial")}
+                      </section>
+                    </>
+                ) : (
+                    <>
+                      <section>
+                        <h3>Ficha del recurso</h3>
+                        <div className="sheet-row"><strong>Nombre:</strong><p>{selectedTarget.data.tit}</p></div>
+                        <div className="sheet-row"><strong>Direccion:</strong><p>{selectedTarget.data.dir || "Sin direccion"}</p></div>
+                        <div className="sheet-row"><strong>Ambito:</strong><p>{selectedTarget.data.amb || "Sin ambito"}</p></div>
+                        <div className="sheet-row"><strong>Tipo:</strong><p>{selectedTarget.data.tip || "Sin tipo"}</p></div>
+                        <div className="sheet-row"><strong>¿Cómo acceder?:</strong>{renderArrayItems(selectedTarget.data.req_acc, "Sin requisitos")}</div>
+                        <div className="sheet-row"><strong>Geolocalizacion:</strong><p>{selectedTarget.data.lat}, {selectedTarget.data.lng}</p></div>
+                      </section>
+                      <section>
+                        <h3>Descripcion del servicio</h3>
+                        {renderArrayItems(selectedTarget.data.des_ser, "Sin descripcion")}
+                      </section>
+                    </>
+                )}
+              </aside>
+          )}
+        </main>
+      </div>
   );
 }
 
