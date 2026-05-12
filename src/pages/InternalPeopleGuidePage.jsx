@@ -82,6 +82,12 @@ function InternalPeopleGuidePage({ readOnly = false }) {
   const [matchSuggestions, setMatchSuggestions] = useState("");
   const [matchLoading, setMatchLoading] = useState(false);
   const [matchError, setMatchError] = useState("");
+
+  // Limpia las sugerencias IA al cambiar de persona seleccionada
+  useEffect(() => {
+    setMatchSuggestions("");
+    setMatchError("");
+  }, [selectedId]);
   const canEdit = session?.user?.role === "coordinadora" && !readOnly;
 
   useEffect(() => {
