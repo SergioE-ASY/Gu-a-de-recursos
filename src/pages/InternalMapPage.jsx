@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 import L from "leaflet";
@@ -99,6 +99,131 @@ function renderArrayItems(items, emptyLabel = "Sin datos") {
             <li key={item}>{item}</li>
         ))}
       </ul>
+  );
+}
+
+// Entradas de la leyenda: icono + etiqueta descriptiva
+// Solo se incluyen los archivos que existen en /public/assets/icons/map_markers/
+const LEGEND_ITEMS = [
+  // Personas
+  { src: "/assets/icons/map_markers/persona_usuaria.svg",   label: "Usuaria atendida"  },
+  { src: "/assets/icons/map_markers/persona_potencial.svg", label: "Persona potencial" },
+  { src: "/assets/icons/map_markers/persona_recurso.svg",   label: "Persona recurso"   },
+  // Recursos
+  { src: "/assets/icons/map_markers/salud.png",        label: "Salud"         },
+  { src: "/assets/icons/map_markers/urgencias.png",    label: "Urgencias"     },
+  { src: "/assets/icons/map_markers/consultorio.png",  label: "Consultorio"   },
+  { src: "/assets/icons/map_markers/dentista.png",     label: "Dentista"      },
+  { src: "/assets/icons/map_markers/fisioterapia.png", label: "Fisioterapia"  },
+  { src: "/assets/icons/map_markers/educacion.png",    label: "Educación"     },
+  { src: "/assets/icons/map_markers/ancianos.png",     label: "Ancianos"      },
+  { src: "/assets/icons/map_markers/ayuntamiento.png", label: "Ayuntamiento"  },
+  { src: "/assets/icons/map_markers/mujer.png",        label: "Mujer"         },
+];
+
+// Panel de leyenda flotante sobre el mapa, plegable y arrastrable
+function MapLegend() {
+  const [open, setOpen] = useState(true);
+  // Posición inicial: esquina inferior derecha (se calcula al montar)
+  const [pos, setPos] = useState({ bottom: 24, right: 12 });
+  // Guardamos el offset del ratón respecto a la esquina del panel al iniciar el drag
+  const dragOffset = useRef(null);
+  const panelRef = useRef(null);
+
+  useEffect(() => {
+    if (!panelRef.current) return;
+    // Evita que Leaflet capture eventos del panel (mousedown, click, scroll…)
+    // Sin esto, al arrastrar la leyenda Leaflet añade 'leaflet-drag-target' al body,
+    // lo que aplica cursor:move!important a todos los elementos de la página.
+    L.DomEvent.disableClickPropagation(panelRef.current);
+    L.DomEvent.disableScrollPropagation(panelRef.current);
+  }, []);
+
+  function onMouseDown(e) {
+    // Solo arrastramos con el botón izquierdo
+    if (e.button !== 0) return;
+    e.preventDefault();
+    const rect = panelRef.current.getBoundingClientRect();
+    // Offset entre el cursor y la esquina superior izquierda del panel
+    dragOffset.current = {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    };
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+  }
+
+  function onMouseMove(e) {
+    if (!dragOffset.current) return;
+    // Calculamos nueva posición como top/left para mayor control
+    setPos({
+      top: e.clientY - dragOffset.current.y,
+      left: e.clientX - dragOffset.current.x,
+    });
+  }
+
+  function onMouseUp() {
+    dragOffset.current = null;
+    window.removeEventListener("mousemove", onMouseMove);
+    window.removeEventListener("mouseup", onMouseUp);
+  }
+
+  // Estilo de posición: usa top/left tras primer drag, bottom/right al inicio
+  const posStyle = pos.top !== undefined
+    ? { top: pos.top, left: pos.left }
+    : { bottom: pos.bottom, right: pos.right };
+
+  return (
+    <div
+      ref={panelRef}
+      className="map-legend"
+      style={{
+        position: "absolute",
+        ...posStyle,
+        zIndex: 1000,
+        background: "rgba(20,26,36,0.93)",
+        borderRadius: 10,
+        minWidth: 190,
+        boxShadow: "0 2px 10px rgba(0,0,0,0.4)",
+        color: "#fff",
+        fontSize: 13,
+        userSelect: "none", // evita selección de texto al arrastrar
+        cursor: "default",  // cursor normal fuera de la cabecera
+      }}
+    >
+      {/* Cabecera: arrastrando aquí se mueve el panel; clic simple pliega/despliega */}
+      <div
+        className="legend-header"
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          cursor: "grab",
+          padding: "8px 14px",
+          borderRadius: open ? "10px 10px 0 0" : 10,
+          background: "rgba(255,255,255,0.06)",
+        }}
+        onMouseDown={onMouseDown}
+        onClick={() => setOpen(o => !o)}
+      >
+        <strong style={{ fontSize: 13 }}>☰ Leyenda</strong>
+        <span style={{ marginLeft: 8, fontSize: 11, opacity: 0.7 }}>
+          {open ? "▲ ocultar" : "▼ mostrar"}
+        </span>
+      </div>
+
+      {/* Lista de iconos, solo visible cuando está abierto */}
+      {open && (
+        <ul style={{ listStyle: "none", margin: 0, padding: "8px 14px 10px" }}>
+          {LEGEND_ITEMS.map(item => (
+            <li key={item.label} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
+              <img src={item.src} alt={item.label} style={{ width: 24, height: 24, objectFit: "contain" }} />
+              <span>{item.label}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 
@@ -415,7 +540,9 @@ function InternalMapPage() {
             </aside>
         )}
 
-        <main className="map-wrapper">
+        <main className="map-wrapper" style={{ position: "relative" }}>
+          {/* Leyenda flotante sobre el mapa */}
+          <MapLegend />
           <MapContainer center={defaultCenter} zoom={11} className="map">
             <TileLayer
                 attribution={tileLayers[mapViewMode].attribution}

@@ -303,6 +303,17 @@
   min-height: 0;
 }
 
+/* Sobrescribe cursor de Leaflet en la leyenda flotante.
+   Especificidad (0,2,0) supera a la regla de Leaflet
+   body.leaflet-drag-target * { cursor: move !important } que vale (0,1,1) */
+.map-wrapper .map-legend,
+.map-wrapper .map-legend * {
+  cursor: default !important;
+}
+.map-wrapper .map-legend .legend-header {
+  cursor: grab !important;
+}
+
 .map {
   height: 100%;
   width: 100%;
