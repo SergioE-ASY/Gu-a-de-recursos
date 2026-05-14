@@ -588,11 +588,12 @@ function ResourceSheet({ resource, onClose }) {
             {renderListItems(resource.ema)}
           </div>
         )}
-        {resource.web && (
+        {resource.web && /^https?:\/\//i.test(resource.web) && (
           <div className="sheet-row">
             <strong>Sitio web:</strong>
             <p>
-              <a href={resource.web} target="_blank" rel="noreferrer">
+              {/* Solo renderizamos el enlace si la URL empieza por http:// o https:// */}
+              <a href={resource.web} target="_blank" rel="noreferrer noopener">
                 {resource.web}
               </a>
             </p>
