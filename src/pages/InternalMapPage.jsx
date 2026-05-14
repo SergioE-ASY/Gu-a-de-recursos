@@ -440,6 +440,7 @@ function InternalMapPage() {
             <button
                 type="button"
                 className={mapViewMode === "map" ? "active" : ""}
+                aria-pressed={mapViewMode === "map"}
                 onClick={() => setMapViewMode("map")}
             >
               Mapa
@@ -447,6 +448,7 @@ function InternalMapPage() {
             <button
                 type="button"
                 className={mapViewMode === "satellite" ? "active" : ""}
+                aria-pressed={mapViewMode === "satellite"}
                 onClick={() => setMapViewMode("satellite")}
             >
               Satelite
@@ -457,7 +459,8 @@ function InternalMapPage() {
         {loading && <p className="floating-message">Cargando datos internos...</p>}
         {error && <p className="floating-message error">{error}</p>}
 
-        <aside className={isFilterDrawerOpen ? "filters-drawer open" : "filters-drawer"}>
+        <aside className={isFilterDrawerOpen ? "filters-drawer open" : "filters-drawer"}
+        onKeyDown={(e) => { if (e.key === "Escape") setIsFilterDrawerOpen(false); }}>
           <div className="filters-header-row">
             <h2>Filtros</h2>
             <button type="button" className="ghost" onClick={() => setIsFilterDrawerOpen(false)}>
@@ -477,6 +480,7 @@ function InternalMapPage() {
                       key={type}
                       type="button"
                       className={peopleTypeFilter[type] ? "option active" : "option"}
+                      aria-pressed={peopleTypeFilter[type]}
                       onClick={() => togglePeopleType(type)}
                   >
                     {PEOPLE_LABELS[type] || type}
@@ -496,6 +500,7 @@ function InternalMapPage() {
                           key={value}
                           type="button"
                           className={(resourceFilters[filterItem.key] ?? []).includes(typeof value === 'object' ? value.value : value) ? "option active" : "option"}
+                          aria-pressed={(resourceFilters[filterItem.key] ?? []).includes(typeof value === 'object' ? value.value : value)}
                           onClick={() => toggleResourceFilter(filterItem.key, typeof value === 'object' ? value.value : value)}
                       >
                         {typeof value === 'object' ? value.label : value}
@@ -506,7 +511,14 @@ function InternalMapPage() {
           ))}
         </aside>
 
-        {isFilterDrawerOpen && <div className="drawer-overlay" onClick={() => setIsFilterDrawerOpen(false)} />}
+        {isFilterDrawerOpen && <div
+          className="drawer-overlay"
+          role="button"
+          tabIndex={0}
+          aria-label="Cerrar filtros"
+          onClick={() => setIsFilterDrawerOpen(false)}
+          onKeyDown={(e) => { if (e.key === "Escape" || e.key === "Enter" || e.key === " ") setIsFilterDrawerOpen(false); }}
+        />}
 
         {isResultsPanelOpen && (
             <aside className="results-panel">

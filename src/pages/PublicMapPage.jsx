@@ -933,6 +933,7 @@ function PublicMapPage() {
           <button
             type="button"
             className={mapViewMode === "map" ? "active" : ""}
+            aria-pressed={mapViewMode === "map"}
             onClick={() => setMapViewMode("map")}
           >
             Mapa
@@ -940,6 +941,7 @@ function PublicMapPage() {
           <button
             type="button"
             className={mapViewMode === "satellite" ? "active" : ""}
+            aria-pressed={mapViewMode === "satellite"}
             onClick={() => setMapViewMode("satellite")}
           >
             Satelite
@@ -967,7 +969,8 @@ function PublicMapPage() {
       {locationError && <p className="floating-message error">{locationError}</p>}
       {error && <p className="floating-message error">{error}</p>}
 
-      <aside className={isFilterDrawerOpen ? "filters-drawer open" : "filters-drawer"}>
+      <aside className={isFilterDrawerOpen ? "filters-drawer open" : "filters-drawer"}
+        onKeyDown={(e) => { if (e.key === "Escape") setIsFilterDrawerOpen(false); }}>
         <div className="filters-header-row">
           <h2>Filtros</h2>
           <button type="button" className="ghost" onClick={() => setIsFilterDrawerOpen(false)}>
@@ -995,6 +998,7 @@ function PublicMapPage() {
                     key={optionValue}
                     type="button"
                     className={(appliedFilters[filterItem.key] ?? []).includes(optionValue) ? "option active" : "option"}
+                    aria-pressed={(appliedFilters[filterItem.key] ?? []).includes(optionValue)}
                     onClick={() => toggleFilter(filterItem.key, optionValue)}
                   >
                     {optionLabel}
@@ -1006,7 +1010,14 @@ function PublicMapPage() {
         ))}
       </aside>
 
-      {isFilterDrawerOpen && <div className="drawer-overlay" onClick={() => setIsFilterDrawerOpen(false)} />}
+      {isFilterDrawerOpen && <div
+          className="drawer-overlay"
+          role="button"
+          tabIndex={0}
+          aria-label="Cerrar filtros"
+          onClick={() => setIsFilterDrawerOpen(false)}
+          onKeyDown={(e) => { if (e.key === "Escape" || e.key === "Enter" || e.key === " ") setIsFilterDrawerOpen(false); }}
+        />}
 
       {isResultsPanelOpen && (
         <aside className="results-panel">

@@ -63,6 +63,33 @@ function isValidCoord(lat, lng) {
   return typeof lat === "number" && typeof lng === "number" && !isNaN(lat) && !isNaN(lng);
 }
 
+// Componente extraído a nivel de módulo para evitar remount en cada render del padre
+// Recibe por props todo lo que necesita del estado del componente padre
+function MatchmakingPanel({ person, matchLoading, matchError, matchSuggestions, onMatchmaking }) {
+  return (
+      <section className="matchmaking-panel">
+        <h3>Sugerencias de recursos (IA)</h3>
+        <button
+            type="button"
+            className="ghost"
+            disabled={matchLoading}
+            onClick={() => onMatchmaking(person)}
+        >
+          {matchLoading ? "Consultando..." : "Sugerir recursos cercanos"}
+        </button>
+        {matchError && <p className="match-error">{matchError}</p>}
+        {matchSuggestions && (
+            <div className="matchmaking-result">
+              {/* Renderizamos el texto línea a línea para no depender de un parser markdown */}
+              {matchSuggestions.split("\n").map((line, i) => (
+                  <p key={i}>{line}</p>
+              ))}
+            </div>
+        )}
+      </section>
+  );
+}
+
 function InternalPeopleGuidePage({ readOnly = false }) {
   const [session, setSession] = useState(() => getPersistedSession());
   const [people, setPeople] = useState([]);
@@ -269,30 +296,7 @@ function InternalPeopleGuidePage({ readOnly = false }) {
   }
 
   // Panel reutilizable de sugerencias IA — se inserta en la ficha de persona
-  function MatchmakingPanel({ person }) {
-    return (
-        <section className="matchmaking-panel">
-          <h3>Sugerencias de recursos (IA)</h3>
-          <button
-              type="button"
-              className="ghost"
-              disabled={matchLoading}
-              onClick={() => handleMatchmaking(person)}
-          >
-            {matchLoading ? "Consultando..." : "Sugerir recursos cercanos"}
-          </button>
-          {matchError && <p className="match-error">{matchError}</p>}
-          {matchSuggestions && (
-              <div className="matchmaking-result">
-                {/* Renderizamos el texto línea a línea para no depender de un parser markdown */}
-                {matchSuggestions.split("\n").map((line, i) => (
-                    <p key={i}>{line}</p>
-                ))}
-              </div>
-          )}
-        </section>
-    );
-  }
+
 
   return (
       <main className={readOnly ? "admin-dashboard-page internal-consult-page" : "admin-dashboard-page"}>
@@ -350,6 +354,7 @@ function InternalPeopleGuidePage({ readOnly = false }) {
                           key={type}
                           type="button"
                           className={typeFilter === type ? "active" : ""}
+                          aria-pressed={typeFilter === type}
                           onClick={() => setTypeFilter(type)}
                       >
                         {type === "todos" ? "Todos" : (PEOPLE_LABELS[type] || type)}
@@ -464,7 +469,13 @@ function InternalPeopleGuidePage({ readOnly = false }) {
                             {renderArrayItems(selectedPerson.historialAcuerdos, "Sin historial")}
                           </section>
                           {/* Agente de matchmaking: sugiere recursos cercanos usando IA */}
-                          <MatchmakingPanel person={selectedPerson} />
+                          <MatchmakingPanel
+                            person={selectedPerson}
+                            matchLoading={matchLoading}
+                            matchError={matchError}
+                            matchSuggestions={matchSuggestions}
+                            onMatchmaking={handleMatchmaking}
+                          />
                         </>
                     )}
 
@@ -502,6 +513,7 @@ function InternalPeopleGuidePage({ readOnly = false }) {
                           key={type}
                           type="button"
                           className={typeFilter === type ? "active" : ""}
+                          aria-pressed={typeFilter === type}
                           onClick={() => setTypeFilter(type)}
                       >
                         {type === "todos" ? "Todos" : (PEOPLE_LABELS[type] || type)}
@@ -644,7 +656,13 @@ function InternalPeopleGuidePage({ readOnly = false }) {
                         {renderArrayItems(selectedPerson.historialAcuerdos, "Sin historial")}
                       </div>
                       {/* Agente de matchmaking: sugiere recursos cercanos usando IA */}
-                      <MatchmakingPanel person={selectedPerson} />
+                      <MatchmakingPanel
+                            person={selectedPerson}
+                            matchLoading={matchLoading}
+                            matchError={matchError}
+                            matchSuggestions={matchSuggestions}
+                            onMatchmaking={handleMatchmaking}
+                          />
                     </div>
                 )}
               </article>
