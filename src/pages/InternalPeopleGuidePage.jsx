@@ -2,7 +2,13 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { CircleMarker, MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 import { getPersistedSession, logout } from "../services/authApi";
-import { normalizePersonIcon, normalizeText } from "../utils/mapUtils";
+import {
+  isValidCoord,
+  normalizePersonIcon,
+  normalizeText,
+  PEOPLE_LABELS,
+  renderArrayItems,
+} from "../utils/mapUtils";
 import { fetchResources } from "../services/resourcesApi";
 import {
   TYPE_COLORS,
@@ -16,12 +22,6 @@ import { suggestMatchingResources } from "../services/matchmakingApi";
 import "./admin.css";
 
 const defaultCenter = [27.74216081251307, -18.008738423478977];
-
-const PEOPLE_LABELS = {
-  usuaria: "Usuaria Atendida",
-  potencial: "Persona Potencial",
-  recurso: "Persona Recurso",
-};
 
 const initialForm = {
   nombre: "",
@@ -41,28 +41,7 @@ function toArrayFromText(text) {
       .filter(Boolean);
 }
 
-function renderArrayItems(items, emptyLabel = "Sin datos") {
-  if (!items || items.length === 0) {
-    return (
-        <ul>
-          <li>{emptyLabel}</li>
-        </ul>
-    );
-  }
-  return (
-      <ul>
-        {items.map((item) => (
-            <li key={item}>{item}</li>
-        ))}
-      </ul>
-  );
-}
-
 // Comprueba que lat y lng sean números válidos antes de usarlos en Leaflet
-function isValidCoord(lat, lng) {
-  return typeof lat === "number" && typeof lng === "number" && !isNaN(lat) && !isNaN(lng);
-}
-
 // Componente extraído a nivel de módulo para evitar remount en cada render del padre
 // Recibe por props todo lo que necesita del estado del componente padre
 function MatchmakingPanel({ person, matchLoading, matchError, matchSuggestions, onMatchmaking }) {

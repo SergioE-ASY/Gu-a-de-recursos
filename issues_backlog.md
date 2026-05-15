@@ -189,7 +189,7 @@ Este documento centraliza las tareas pendientes y en curso para la mejora de la 
   - `getValuesFromResource`: copiada en `PublicMapPage.jsx` e `InternalMapPage.jsx` (no existe en `mapUtils.js`).
   - `renderArrayItems`: copiada en `InternalMapPage.jsx` e `InternalPeopleGuidePage.jsx`.
   - `PEOPLE_LABELS`: duplicada en `InternalMapPage.jsx` e `InternalPeopleGuidePage.jsx`.
-- **Estado**: Pendiente
+- **Estado**: Completada
 - **Prioridad**: Baja
 
 ---
@@ -197,7 +197,7 @@ Este documento centraliza las tareas pendientes y en curso para la mejora de la 
 ### 18. L.icon() instanciado en cada render del mapa
 
 - **Descripción**: En `PublicMapPage.jsx` (línea 1051) e `InternalMapPage.jsx` (línea 429), `L.icon({...})` se crea dentro del `.map()` del JSX, generando un nuevo objeto por marcador en cada render del componente. Con un catálogo grande de recursos esto supone trabajo innecesario. Los iconos deberían memoizarse (por ejemplo con un `Map<iconName, L.Icon>` o `useMemo`).
-- **Estado**: Pendiente
+- **Estado**: Completada
 - **Prioridad**: Baja
 
 ---
@@ -221,7 +221,7 @@ Este documento centraliza las tareas pendientes y en curso para la mejora de la 
 ### 21. isMobileViewport() no se actualiza al redimensionar la ventana
 
 - **Descripción**: `isResultsPanelOpen` se inicializa una vez con `isMobileViewport()` pero no hay ningún listener de `resize`/`matchMedia` que lo actualice. Si el usuario rota el dispositivo o redimensiona la ventana entre móvil y escritorio, el panel de resultados queda en un estado inconsistente. Debería suscribirse al cambio de media query o recalcular en el efecto adecuado.
-- **Estado**: Pendiente
+- **Estado**: Completada
 - **Prioridad**: Baja
 
 ---
@@ -237,7 +237,7 @@ Este documento centraliza las tareas pendientes y en curso para la mejora de la 
 ### 23. activeFilterCount en InternalMapPage cuenta filtros de persona incorrectamente
 
 - **Descripción**: `InternalMapPage.jsx` (líneas 226–230) suma los tipos de persona cuyo filtro es `true` (activos/visibles). En el estado inicial los tres están a `true`, por lo que el contador arranca en 3 aunque no haya ningún filtro aplicado. Debería contar los tipos desactivados (los que no se muestran), o bien excluir el conteo de personas del indicador de filtros activos.
-- **Estado**: Pendiente
+- **Estado**: Completada
 - **Prioridad**: Baja
 
 ### 24. Leyenda de iconos en mapa interno (InternalMapPage)

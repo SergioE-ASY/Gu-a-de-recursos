@@ -5,8 +5,17 @@ import L from "leaflet";
 import "../App.css";
 import { getPersistedSession, logout } from "../services/authApi";
 import { fetchResources } from "../services/resourcesApi";
-import { listInternalPeople, TYPE_COLORS as peopleTypeColors } from "../services/internalPeopleApi";
-import { isMobileViewport, normalizePersonIcon, normalizeText } from "../utils/mapUtils";
+import { listInternalPeople } from "../services/internalPeopleApi";
+import {
+  getResourceMarkerIcon,
+  getValuesFromResource,
+  isMobileViewport,
+  isValidCoord,
+  normalizePersonIcon,
+  normalizeText,
+  PEOPLE_LABELS,
+  renderArrayItems,
+} from "../utils/mapUtils";
 
 const defaultCenter = [27.74216081251307, -18.008738423478977];
 const resultsPerPage = 12;
@@ -48,12 +57,6 @@ const tileLayers = {
   },
 };
 
-const PEOPLE_LABELS = {
-  usuaria: "Usuaria Atendida",
-  potencial: "Persona Potencial",
-  recurso: "Persona Recurso",
-};
-
 function createEmptyFilters() {
   return filterConfig.reduce((acc, item) => {
     acc[item.key] = [];
@@ -61,45 +64,15 @@ function createEmptyFilters() {
   }, {});
 }
 
-function getValuesFromResource(resource, key) {
-  const value = resource[key];
-  if (typeof value === "string") return [value];
-  if (Array.isArray(value)) return value.filter((item) => typeof item === "string");
-  return [];
-}
-
-function normalizeMarkerIcon(iconName) {
-  if (!iconName) return "/assets/icons/map_markers/salud.png";
-  return `/assets/icons/map_markers/${iconName}.png`;
-}
-
 function FlyToTarget({ target }) {
   const map = useMap();
   useEffect(() => {
     if (!target) return;
     // Validar coordenadas antes de llamar a setView para evitar que Leaflet falle
-    if (typeof target.lat !== "number" || typeof target.lng !== "number" ||
-        isNaN(target.lat) || isNaN(target.lng)) return;
+    if (!isValidCoord(target.lat, target.lng)) return;
     map.setView([target.lat, target.lng], 15, { animate: true });
   }, [map, target]);
   return null;
-}
-
-function renderArrayItems(items, emptyLabel = "Sin datos") {
-  if (!items || items.length === 0) {
-    return (
-        <ul>
-          <li>{emptyLabel}</li>
-        </ul>
-    );
-  }
-  return (
-      <ul>
-        {items.map((item) => (
-            <li key={item}>{item}</li>
-        ))}
-      </ul>
-  );
 }
 
 // Entradas de la leyenda: icono + etiqueta descriptiva
@@ -248,6 +221,14 @@ function InternalMapPage() {
   const [selectedTarget, setSelectedTarget] = useState(null);
 
   useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+    const mediaQuery = window.matchMedia("(max-width: 980px)");
+    const syncResultsPanel = (event) => setIsResultsPanelOpen(!event.matches);
+    mediaQuery.addEventListener("change", syncResultsPanel);
+    return () => mediaQuery.removeEventListener("change", syncResultsPanel);
+  }, []);
+
+  useEffect(() => {
     let active = true;
 
     async function loadData() {
@@ -348,9 +329,21 @@ function InternalMapPage() {
     );
   }, [allSearchItems, search]);
 
+  const visibleMapResources = useMemo(() => {
+    if (selectedTarget?.kind === "resource") return [selectedTarget.data];
+    if (selectedTarget) return [];
+    return filteredResources;
+  }, [filteredResources, selectedTarget]);
+
+  const visibleMapPeople = useMemo(() => {
+    if (selectedTarget?.kind === "person") return [selectedTarget.data];
+    if (selectedTarget) return [];
+    return filteredPeople;
+  }, [filteredPeople, selectedTarget]);
+
   const activeFilterCount = useMemo(() => {
     const resourceCount = Object.values(resourceFilters).reduce((total, values) => total + values.length, 0);
-    const peopleCount = Object.values(peopleTypeFilter).filter(Boolean).length;
+    const peopleCount = Object.values(peopleTypeFilter).filter((isVisible) => !isVisible).length;
     return resourceCount + peopleCount;
   }, [resourceFilters, peopleTypeFilter]);
 
@@ -561,19 +554,14 @@ function InternalMapPage() {
                 url={tileLayers[mapViewMode].url}
                 maxZoom={tileLayers[mapViewMode].maxZoom}
             />
-            {filteredResources.map((resource) => {
+            {visibleMapResources.map((resource) => {
                 // Omitir marcadores con coordenadas inválidas
-                if (typeof resource.lat !== "number" || typeof resource.lng !== "number" ||
-                    isNaN(resource.lat) || isNaN(resource.lng)) return null;
+                if (!isValidCoord(resource.lat, resource.lng)) return null;
                 return (
                 <Marker
                     key={`resource-${resource.id}`}
                     position={[resource.lat, resource.lng]}
-                    icon={L.icon({
-                      iconUrl: normalizeMarkerIcon(resource.map_marker_icon),
-                      iconSize: [32, 37],
-                      iconAnchor: [16, 37],
-                    })}
+                    icon={getResourceMarkerIcon(resource.map_marker_icon)}
                     eventHandlers={{
                       click: () =>
                           setSelectedTarget({
@@ -593,7 +581,9 @@ function InternalMapPage() {
                 );
             })}
 
-            {filteredPeople.map((person) => (
+            {visibleMapPeople.map((person) => {
+              if (!isValidCoord(person.lat, person.lng)) return null;
+              return (
                 <Marker
                     key={`person-${person.id}`}
                     position={[person.lat, person.lng]}
@@ -615,7 +605,8 @@ function InternalMapPage() {
                     {PEOPLE_LABELS[person.tipo] || person.tipo} · {person.zona}
                   </Popup>
                 </Marker>
-            ))}
+              );
+            })}
 
             <FlyToTarget target={selectedTarget} />
           </MapContainer>
