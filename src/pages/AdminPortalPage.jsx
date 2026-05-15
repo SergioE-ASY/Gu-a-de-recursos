@@ -125,6 +125,19 @@ function AdminPortalPage() {
   async function handleSave(event) {
     event.preventDefault();
     if (!canEdit) return;
+
+    // Validar que lat/lng sean números finitos en rango válido antes de enviar
+    const latNum = Number(form.lat);
+    const lngNum = Number(form.lng);
+    if (!isFinite(latNum) || latNum === 0 || latNum < -90 || latNum > 90) {
+      setResourceError("La latitud debe ser un número válido entre -90 y 90.");
+      return;
+    }
+    if (!isFinite(lngNum) || lngNum === 0 || lngNum < -180 || lngNum > 180) {
+      setResourceError("La longitud debe ser un número válido entre -180 y 180.");
+      return;
+    }
+
     const payload = mapFormToResource(form);
 
     try {

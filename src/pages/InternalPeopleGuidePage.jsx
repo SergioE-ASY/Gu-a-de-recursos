@@ -2,7 +2,13 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { CircleMarker, MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 import { getPersistedSession, logout } from "../services/authApi";
-import { normalizePersonIcon, normalizeText } from "../utils/mapUtils";
+import {
+  isValidCoord,
+  normalizePersonIcon,
+  normalizeText,
+  PEOPLE_LABELS,
+  renderArrayItems,
+} from "../utils/mapUtils";
 import { fetchResources } from "../services/resourcesApi";
 import {
   TYPE_COLORS,
@@ -16,12 +22,6 @@ import { suggestMatchingResources } from "../services/matchmakingApi";
 import "./admin.css";
 
 const defaultCenter = [27.74216081251307, -18.008738423478977];
-
-const PEOPLE_LABELS = {
-  usuaria: "Usuaria Atendida",
-  potencial: "Persona Potencial",
-  recurso: "Persona Recurso",
-};
 
 const initialForm = {
   nombre: "",
@@ -41,26 +41,32 @@ function toArrayFromText(text) {
       .filter(Boolean);
 }
 
-function renderArrayItems(items, emptyLabel = "Sin datos") {
-  if (!items || items.length === 0) {
-    return (
-        <ul>
-          <li>{emptyLabel}</li>
-        </ul>
-    );
-  }
-  return (
-      <ul>
-        {items.map((item) => (
-            <li key={item}>{item}</li>
-        ))}
-      </ul>
-  );
-}
-
 // Comprueba que lat y lng sean números válidos antes de usarlos en Leaflet
-function isValidCoord(lat, lng) {
-  return typeof lat === "number" && typeof lng === "number" && !isNaN(lat) && !isNaN(lng);
+// Componente extraído a nivel de módulo para evitar remount en cada render del padre
+// Recibe por props todo lo que necesita del estado del componente padre
+function MatchmakingPanel({ person, matchLoading, matchError, matchSuggestions, onMatchmaking }) {
+  return (
+      <section className="matchmaking-panel">
+        <h3>Sugerencias de recursos (IA)</h3>
+        <button
+            type="button"
+            className="ghost"
+            disabled={matchLoading}
+            onClick={() => onMatchmaking(person)}
+        >
+          {matchLoading ? "Consultando..." : "Sugerir recursos cercanos"}
+        </button>
+        {matchError && <p className="match-error">{matchError}</p>}
+        {matchSuggestions && (
+            <div className="matchmaking-result">
+              {/* Renderizamos el texto línea a línea para no depender de un parser markdown */}
+              {matchSuggestions.split("\n").map((line, i) => (
+                  <p key={i}>{line}</p>
+              ))}
+            </div>
+        )}
+      </section>
+  );
 }
 
 function InternalPeopleGuidePage({ readOnly = false }) {
@@ -182,10 +188,23 @@ function InternalPeopleGuidePage({ readOnly = false }) {
   async function handleSave(event) {
     event.preventDefault();
     if (!canEdit) return;
+
+    // Validar que lat/lng sean números finitos en rango válido antes de enviar
+    const latNum = Number(form.lat);
+    const lngNum = Number(form.lng);
+    if (!isFinite(latNum) || latNum === 0 || latNum < -90 || latNum > 90) {
+      setError("La latitud debe ser un número válido entre -90 y 90.");
+      return;
+    }
+    if (!isFinite(lngNum) || lngNum === 0 || lngNum < -180 || lngNum > 180) {
+      setError("La longitud debe ser un número válido entre -180 y 180.");
+      return;
+    }
+
     const payload = {
       ...form,
-      lat: Number(form.lat),
-      lng: Number(form.lng),
+      lat: latNum,
+      lng: lngNum,
       relacionesActivas: toArrayFromText(relacionesActivasText),
       relacionesInactivas: toArrayFromText(relacionesInactivasText),
       historialAcuerdos: toArrayFromText(historialText),
@@ -256,30 +275,7 @@ function InternalPeopleGuidePage({ readOnly = false }) {
   }
 
   // Panel reutilizable de sugerencias IA — se inserta en la ficha de persona
-  function MatchmakingPanel({ person }) {
-    return (
-        <section className="matchmaking-panel">
-          <h3>Sugerencias de recursos (IA)</h3>
-          <button
-              type="button"
-              className="ghost"
-              disabled={matchLoading}
-              onClick={() => handleMatchmaking(person)}
-          >
-            {matchLoading ? "Consultando..." : "Sugerir recursos cercanos"}
-          </button>
-          {matchError && <p className="match-error">{matchError}</p>}
-          {matchSuggestions && (
-              <div className="matchmaking-result">
-                {/* Renderizamos el texto línea a línea para no depender de un parser markdown */}
-                {matchSuggestions.split("\n").map((line, i) => (
-                    <p key={i}>{line}</p>
-                ))}
-              </div>
-          )}
-        </section>
-    );
-  }
+
 
   return (
       <main className={readOnly ? "admin-dashboard-page internal-consult-page" : "admin-dashboard-page"}>
@@ -337,6 +333,7 @@ function InternalPeopleGuidePage({ readOnly = false }) {
                           key={type}
                           type="button"
                           className={typeFilter === type ? "active" : ""}
+                          aria-pressed={typeFilter === type}
                           onClick={() => setTypeFilter(type)}
                       >
                         {type === "todos" ? "Todos" : (PEOPLE_LABELS[type] || type)}
@@ -451,7 +448,13 @@ function InternalPeopleGuidePage({ readOnly = false }) {
                             {renderArrayItems(selectedPerson.historialAcuerdos, "Sin historial")}
                           </section>
                           {/* Agente de matchmaking: sugiere recursos cercanos usando IA */}
-                          <MatchmakingPanel person={selectedPerson} />
+                          <MatchmakingPanel
+                            person={selectedPerson}
+                            matchLoading={matchLoading}
+                            matchError={matchError}
+                            matchSuggestions={matchSuggestions}
+                            onMatchmaking={handleMatchmaking}
+                          />
                         </>
                     )}
 
@@ -489,6 +492,7 @@ function InternalPeopleGuidePage({ readOnly = false }) {
                           key={type}
                           type="button"
                           className={typeFilter === type ? "active" : ""}
+                          aria-pressed={typeFilter === type}
                           onClick={() => setTypeFilter(type)}
                       >
                         {type === "todos" ? "Todos" : (PEOPLE_LABELS[type] || type)}
@@ -631,7 +635,13 @@ function InternalPeopleGuidePage({ readOnly = false }) {
                         {renderArrayItems(selectedPerson.historialAcuerdos, "Sin historial")}
                       </div>
                       {/* Agente de matchmaking: sugiere recursos cercanos usando IA */}
-                      <MatchmakingPanel person={selectedPerson} />
+                      <MatchmakingPanel
+                            person={selectedPerson}
+                            matchLoading={matchLoading}
+                            matchError={matchError}
+                            matchSuggestions={matchSuggestions}
+                            onMatchmaking={handleMatchmaking}
+                          />
                     </div>
                 )}
               </article>

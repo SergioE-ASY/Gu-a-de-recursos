@@ -1,12 +1,21 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 import L from "leaflet";
 import "../App.css";
 import { getPersistedSession, logout } from "../services/authApi";
 import { fetchResources } from "../services/resourcesApi";
-import { listInternalPeople, TYPE_COLORS as peopleTypeColors } from "../services/internalPeopleApi";
-import { isMobileViewport, normalizePersonIcon, normalizeText } from "../utils/mapUtils";
+import { listInternalPeople } from "../services/internalPeopleApi";
+import {
+  getResourceMarkerIcon,
+  getValuesFromResource,
+  isMobileViewport,
+  isValidCoord,
+  normalizePersonIcon,
+  normalizeText,
+  PEOPLE_LABELS,
+  renderArrayItems,
+} from "../utils/mapUtils";
 
 const defaultCenter = [27.74216081251307, -18.008738423478977];
 const resultsPerPage = 12;
@@ -48,12 +57,6 @@ const tileLayers = {
   },
 };
 
-const PEOPLE_LABELS = {
-  usuaria: "Usuaria Atendida",
-  potencial: "Persona Potencial",
-  recurso: "Persona Recurso",
-};
-
 function createEmptyFilters() {
   return filterConfig.reduce((acc, item) => {
     acc[item.key] = [];
@@ -61,44 +64,139 @@ function createEmptyFilters() {
   }, {});
 }
 
-function getValuesFromResource(resource, key) {
-  const value = resource[key];
-  if (typeof value === "string") return [value];
-  if (Array.isArray(value)) return value.filter((item) => typeof item === "string");
-  return [];
-}
-
-function normalizeMarkerIcon(iconName) {
-  if (!iconName) return "/assets/icons/map_markers/salud.png";
-  return `/assets/icons/map_markers/${iconName}.png`;
-}
-
 function FlyToTarget({ target }) {
   const map = useMap();
   useEffect(() => {
     if (!target) return;
     // Validar coordenadas antes de llamar a setView para evitar que Leaflet falle
-    if (typeof target.lat !== "number" || typeof target.lng !== "number" ||
-        isNaN(target.lat) || isNaN(target.lng)) return;
+    if (!isValidCoord(target.lat, target.lng)) return;
     map.setView([target.lat, target.lng], 15, { animate: true });
   }, [map, target]);
   return null;
 }
 
-function renderArrayItems(items, emptyLabel = "Sin datos") {
-  if (!items || items.length === 0) {
-    return (
-        <ul>
-          <li>{emptyLabel}</li>
-        </ul>
-    );
+// Entradas de la leyenda: icono + etiqueta descriptiva
+// Solo se incluyen los archivos que existen en /public/assets/icons/map_markers/
+const LEGEND_ITEMS = [
+  // Personas
+  { src: "/assets/icons/map_markers/persona_usuaria.svg",   label: "Usuaria atendida"  },
+  { src: "/assets/icons/map_markers/persona_potencial.svg", label: "Persona potencial" },
+  { src: "/assets/icons/map_markers/persona_recurso.svg",   label: "Persona recurso"   },
+  // Recursos
+  { src: "/assets/icons/map_markers/salud.png",        label: "Salud"         },
+  { src: "/assets/icons/map_markers/urgencias.png",    label: "Urgencias"     },
+  { src: "/assets/icons/map_markers/consultorio.png",  label: "Consultorio"   },
+  { src: "/assets/icons/map_markers/dentista.png",     label: "Dentista"      },
+  { src: "/assets/icons/map_markers/fisioterapia.png", label: "Fisioterapia"  },
+  { src: "/assets/icons/map_markers/educacion.png",    label: "Educación"     },
+  { src: "/assets/icons/map_markers/ancianos.png",     label: "Ancianos"      },
+  { src: "/assets/icons/map_markers/ayuntamiento.png", label: "Ayuntamiento"  },
+  { src: "/assets/icons/map_markers/mujer.png",        label: "Mujer"         },
+];
+
+// Panel de leyenda flotante sobre el mapa, plegable y arrastrable
+function MapLegend() {
+  const [open, setOpen] = useState(true);
+  // Posición inicial: esquina inferior derecha (se calcula al montar)
+  const [pos, setPos] = useState({ bottom: 24, right: 12 });
+  // Guardamos el offset del ratón respecto a la esquina del panel al iniciar el drag
+  const dragOffset = useRef(null);
+  const panelRef = useRef(null);
+
+  useEffect(() => {
+    if (!panelRef.current) return;
+    // Evita que Leaflet capture eventos del panel (mousedown, click, scroll…)
+    // Sin esto, al arrastrar la leyenda Leaflet añade 'leaflet-drag-target' al body,
+    // lo que aplica cursor:move!important a todos los elementos de la página.
+    L.DomEvent.disableClickPropagation(panelRef.current);
+    L.DomEvent.disableScrollPropagation(panelRef.current);
+  }, []);
+
+  function onMouseDown(e) {
+    // Solo arrastramos con el botón izquierdo
+    if (e.button !== 0) return;
+    e.preventDefault();
+    const rect = panelRef.current.getBoundingClientRect();
+    // Offset entre el cursor y la esquina superior izquierda del panel
+    dragOffset.current = {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    };
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
   }
+
+  function onMouseMove(e) {
+    if (!dragOffset.current) return;
+    // Calculamos nueva posición como top/left para mayor control
+    setPos({
+      top: e.clientY - dragOffset.current.y,
+      left: e.clientX - dragOffset.current.x,
+    });
+  }
+
+  function onMouseUp() {
+    dragOffset.current = null;
+    window.removeEventListener("mousemove", onMouseMove);
+    window.removeEventListener("mouseup", onMouseUp);
+  }
+
+  // Estilo de posición: usa top/left tras primer drag, bottom/right al inicio
+  const posStyle = pos.top !== undefined
+    ? { top: pos.top, left: pos.left }
+    : { bottom: pos.bottom, right: pos.right };
+
   return (
-      <ul>
-        {items.map((item) => (
-            <li key={item}>{item}</li>
-        ))}
-      </ul>
+    <div
+      ref={panelRef}
+      className="map-legend"
+      style={{
+        position: "absolute",
+        ...posStyle,
+        zIndex: 1000,
+        background: "rgba(20,26,36,0.93)",
+        borderRadius: 10,
+        minWidth: 190,
+        boxShadow: "0 2px 10px rgba(0,0,0,0.4)",
+        color: "#fff",
+        fontSize: 13,
+        userSelect: "none", // evita selección de texto al arrastrar
+        cursor: "default",  // cursor normal fuera de la cabecera
+      }}
+    >
+      {/* Cabecera: arrastrando aquí se mueve el panel; clic simple pliega/despliega */}
+      <div
+        className="legend-header"
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          cursor: "grab",
+          padding: "8px 14px",
+          borderRadius: open ? "10px 10px 0 0" : 10,
+          background: "rgba(255,255,255,0.06)",
+        }}
+        onMouseDown={onMouseDown}
+        onClick={() => setOpen(o => !o)}
+      >
+        <strong style={{ fontSize: 13 }}>☰ Leyenda</strong>
+        <span style={{ marginLeft: 8, fontSize: 11, opacity: 0.7 }}>
+          {open ? "▲ ocultar" : "▼ mostrar"}
+        </span>
+      </div>
+
+      {/* Lista de iconos, solo visible cuando está abierto */}
+      {open && (
+        <ul style={{ listStyle: "none", margin: 0, padding: "8px 14px 10px" }}>
+          {LEGEND_ITEMS.map(item => (
+            <li key={item.label} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
+              <img src={item.src} alt={item.label} style={{ width: 24, height: 24, objectFit: "contain" }} />
+              <span>{item.label}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 
@@ -121,6 +219,14 @@ function InternalMapPage() {
   const [currentResultsPage, setCurrentResultsPage] = useState(1);
   const [mapViewMode, setMapViewMode] = useState("map");
   const [selectedTarget, setSelectedTarget] = useState(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+    const mediaQuery = window.matchMedia("(max-width: 980px)");
+    const syncResultsPanel = (event) => setIsResultsPanelOpen(!event.matches);
+    mediaQuery.addEventListener("change", syncResultsPanel);
+    return () => mediaQuery.removeEventListener("change", syncResultsPanel);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -223,9 +329,21 @@ function InternalMapPage() {
     );
   }, [allSearchItems, search]);
 
+  const visibleMapResources = useMemo(() => {
+    if (selectedTarget?.kind === "resource") return [selectedTarget.data];
+    if (selectedTarget) return [];
+    return filteredResources;
+  }, [filteredResources, selectedTarget]);
+
+  const visibleMapPeople = useMemo(() => {
+    if (selectedTarget?.kind === "person") return [selectedTarget.data];
+    if (selectedTarget) return [];
+    return filteredPeople;
+  }, [filteredPeople, selectedTarget]);
+
   const activeFilterCount = useMemo(() => {
     const resourceCount = Object.values(resourceFilters).reduce((total, values) => total + values.length, 0);
-    const peopleCount = Object.values(peopleTypeFilter).filter(Boolean).length;
+    const peopleCount = Object.values(peopleTypeFilter).filter((isVisible) => !isVisible).length;
     return resourceCount + peopleCount;
   }, [resourceFilters, peopleTypeFilter]);
 
@@ -315,6 +433,7 @@ function InternalMapPage() {
             <button
                 type="button"
                 className={mapViewMode === "map" ? "active" : ""}
+                aria-pressed={mapViewMode === "map"}
                 onClick={() => setMapViewMode("map")}
             >
               Mapa
@@ -322,6 +441,7 @@ function InternalMapPage() {
             <button
                 type="button"
                 className={mapViewMode === "satellite" ? "active" : ""}
+                aria-pressed={mapViewMode === "satellite"}
                 onClick={() => setMapViewMode("satellite")}
             >
               Satelite
@@ -332,7 +452,8 @@ function InternalMapPage() {
         {loading && <p className="floating-message">Cargando datos internos...</p>}
         {error && <p className="floating-message error">{error}</p>}
 
-        <aside className={isFilterDrawerOpen ? "filters-drawer open" : "filters-drawer"}>
+        <aside className={isFilterDrawerOpen ? "filters-drawer open" : "filters-drawer"}
+        onKeyDown={(e) => { if (e.key === "Escape") setIsFilterDrawerOpen(false); }}>
           <div className="filters-header-row">
             <h2>Filtros</h2>
             <button type="button" className="ghost" onClick={() => setIsFilterDrawerOpen(false)}>
@@ -352,6 +473,7 @@ function InternalMapPage() {
                       key={type}
                       type="button"
                       className={peopleTypeFilter[type] ? "option active" : "option"}
+                      aria-pressed={peopleTypeFilter[type]}
                       onClick={() => togglePeopleType(type)}
                   >
                     {PEOPLE_LABELS[type] || type}
@@ -371,6 +493,7 @@ function InternalMapPage() {
                           key={value}
                           type="button"
                           className={(resourceFilters[filterItem.key] ?? []).includes(typeof value === 'object' ? value.value : value) ? "option active" : "option"}
+                          aria-pressed={(resourceFilters[filterItem.key] ?? []).includes(typeof value === 'object' ? value.value : value)}
                           onClick={() => toggleResourceFilter(filterItem.key, typeof value === 'object' ? value.value : value)}
                       >
                         {typeof value === 'object' ? value.label : value}
@@ -381,7 +504,14 @@ function InternalMapPage() {
           ))}
         </aside>
 
-        {isFilterDrawerOpen && <div className="drawer-overlay" onClick={() => setIsFilterDrawerOpen(false)} />}
+        {isFilterDrawerOpen && <div
+          className="drawer-overlay"
+          role="button"
+          tabIndex={0}
+          aria-label="Cerrar filtros"
+          onClick={() => setIsFilterDrawerOpen(false)}
+          onKeyDown={(e) => { if (e.key === "Escape" || e.key === "Enter" || e.key === " ") setIsFilterDrawerOpen(false); }}
+        />}
 
         {isResultsPanelOpen && (
             <aside className="results-panel">
@@ -415,26 +545,23 @@ function InternalMapPage() {
             </aside>
         )}
 
-        <main className="map-wrapper">
+        <main className="map-wrapper" style={{ position: "relative" }}>
+          {/* Leyenda flotante sobre el mapa */}
+          <MapLegend />
           <MapContainer center={defaultCenter} zoom={11} className="map">
             <TileLayer
                 attribution={tileLayers[mapViewMode].attribution}
                 url={tileLayers[mapViewMode].url}
                 maxZoom={tileLayers[mapViewMode].maxZoom}
             />
-            {filteredResources.map((resource) => {
+            {visibleMapResources.map((resource) => {
                 // Omitir marcadores con coordenadas inválidas
-                if (typeof resource.lat !== "number" || typeof resource.lng !== "number" ||
-                    isNaN(resource.lat) || isNaN(resource.lng)) return null;
+                if (!isValidCoord(resource.lat, resource.lng)) return null;
                 return (
                 <Marker
                     key={`resource-${resource.id}`}
                     position={[resource.lat, resource.lng]}
-                    icon={L.icon({
-                      iconUrl: normalizeMarkerIcon(resource.map_marker_icon),
-                      iconSize: [32, 37],
-                      iconAnchor: [16, 37],
-                    })}
+                    icon={getResourceMarkerIcon(resource.map_marker_icon)}
                     eventHandlers={{
                       click: () =>
                           setSelectedTarget({
@@ -454,7 +581,9 @@ function InternalMapPage() {
                 );
             })}
 
-            {filteredPeople.map((person) => (
+            {visibleMapPeople.map((person) => {
+              if (!isValidCoord(person.lat, person.lng)) return null;
+              return (
                 <Marker
                     key={`person-${person.id}`}
                     position={[person.lat, person.lng]}
@@ -476,7 +605,8 @@ function InternalMapPage() {
                     {PEOPLE_LABELS[person.tipo] || person.tipo} · {person.zona}
                   </Popup>
                 </Marker>
-            ))}
+              );
+            })}
 
             <FlyToTarget target={selectedTarget} />
           </MapContainer>

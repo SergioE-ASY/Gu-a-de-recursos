@@ -1,10 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
-import L from "leaflet";
 import "../App.css";
 import { fetchResources } from "../services/resourcesApi";
-import { isMobileViewport, normalizeText } from "../utils/mapUtils";
+import {
+  getResourceMarkerIcon,
+  getValuesFromResource,
+  isMobileViewport,
+  isValidCoord,
+  normalizeText,
+} from "../utils/mapUtils";
 
 const defaultCenter = [27.74216081251307, -18.008738423478977];
 const NEEDS_FILTER_KEY = "need";
@@ -507,23 +512,7 @@ function resourceMatchesNeedCategory(resource, category, userPosition) {
   return keywords.some((keyword) => normalizedText.includes(keyword));
 }
 
-function normalizeMarkerIcon(iconName) {
-  if (!iconName) return "/assets/icons/map_markers/salud.png";
-  return `/assets/icons/map_markers/${iconName}.png`;
-}
-
 // Comprueba que lat y lng sean números válidos antes de usarlos en Leaflet
-function isValidCoord(lat, lng) {
-  return typeof lat === "number" && typeof lng === "number" && !isNaN(lat) && !isNaN(lng);
-}
-
-function getValuesFromResource(resource, key) {
-  const value = resource[key];
-  if (typeof value === "string") return [value];
-  if (Array.isArray(value)) return value.filter((item) => typeof item === "string");
-  return [];
-}
-
 function renderListItems(value) {
   if (!value) return null;
 
@@ -588,11 +577,12 @@ function ResourceSheet({ resource, onClose }) {
             {renderListItems(resource.ema)}
           </div>
         )}
-        {resource.web && (
+        {resource.web && /^https?:\/\//i.test(resource.web) && (
           <div className="sheet-row">
             <strong>Sitio web:</strong>
             <p>
-              <a href={resource.web} target="_blank" rel="noreferrer">
+              {/* Solo renderizamos el enlace si la URL empieza por http:// o https:// */}
+              <a href={resource.web} target="_blank" rel="noreferrer noopener">
                 {resource.web}
               </a>
             </p>
@@ -737,6 +727,14 @@ function PublicMapPage() {
   const [locationRequesting, setLocationRequesting] = useState(false);
 
   useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+    const mediaQuery = window.matchMedia("(max-width: 980px)");
+    const syncResultsPanel = (event) => setIsResultsPanelOpen(!event.matches);
+    mediaQuery.addEventListener("change", syncResultsPanel);
+    return () => mediaQuery.removeEventListener("change", syncResultsPanel);
+  }, []);
+
+  useEffect(() => {
     const hasLocationFilter = (appliedFilters[WHERE_FILTER_KEY] ?? []).includes("cerca-de-mi");
     if (!hasLocationFilter || userPosition) return;
     if (typeof navigator === "undefined" || !navigator.geolocation) {
@@ -824,6 +822,11 @@ function PublicMapPage() {
     if (selectedResourceId === null) return null;
     return resources.find((item) => item.id === selectedResourceId) ?? null;
   }, [resources, selectedResourceId]);
+
+  const visibleMapResources = useMemo(
+    () => (selectedResource ? [selectedResource] : filteredResources),
+    [filteredResources, selectedResource]
+  );
 
   const activeFilterCount = useMemo(
     () => Object.values(appliedFilters).reduce((total, values) => total + values.length, 0),
@@ -932,6 +935,7 @@ function PublicMapPage() {
           <button
             type="button"
             className={mapViewMode === "map" ? "active" : ""}
+            aria-pressed={mapViewMode === "map"}
             onClick={() => setMapViewMode("map")}
           >
             Mapa
@@ -939,6 +943,7 @@ function PublicMapPage() {
           <button
             type="button"
             className={mapViewMode === "satellite" ? "active" : ""}
+            aria-pressed={mapViewMode === "satellite"}
             onClick={() => setMapViewMode("satellite")}
           >
             Satelite
@@ -966,7 +971,8 @@ function PublicMapPage() {
       {locationError && <p className="floating-message error">{locationError}</p>}
       {error && <p className="floating-message error">{error}</p>}
 
-      <aside className={isFilterDrawerOpen ? "filters-drawer open" : "filters-drawer"}>
+      <aside className={isFilterDrawerOpen ? "filters-drawer open" : "filters-drawer"}
+        onKeyDown={(e) => { if (e.key === "Escape") setIsFilterDrawerOpen(false); }}>
         <div className="filters-header-row">
           <h2>Filtros</h2>
           <button type="button" className="ghost" onClick={() => setIsFilterDrawerOpen(false)}>
@@ -994,6 +1000,7 @@ function PublicMapPage() {
                     key={optionValue}
                     type="button"
                     className={(appliedFilters[filterItem.key] ?? []).includes(optionValue) ? "option active" : "option"}
+                    aria-pressed={(appliedFilters[filterItem.key] ?? []).includes(optionValue)}
                     onClick={() => toggleFilter(filterItem.key, optionValue)}
                   >
                     {optionLabel}
@@ -1005,7 +1012,14 @@ function PublicMapPage() {
         ))}
       </aside>
 
-      {isFilterDrawerOpen && <div className="drawer-overlay" onClick={() => setIsFilterDrawerOpen(false)} />}
+      {isFilterDrawerOpen && <div
+          className="drawer-overlay"
+          role="button"
+          tabIndex={0}
+          aria-label="Cerrar filtros"
+          onClick={() => setIsFilterDrawerOpen(false)}
+          onKeyDown={(e) => { if (e.key === "Escape" || e.key === "Enter" || e.key === " ") setIsFilterDrawerOpen(false); }}
+        />}
 
       {isResultsPanelOpen && (
         <aside className="results-panel">
@@ -1044,21 +1058,15 @@ function PublicMapPage() {
             url={tileLayers[mapViewMode].url}
             maxZoom={tileLayers[mapViewMode].maxZoom}
           />
-          {filteredResources.map((resource) => {
+          {visibleMapResources.map((resource) => {
             // Omitir marcadores con coordenadas inválidas
             if (!isValidCoord(resource.lat, resource.lng)) return null;
-
-            const icon = L.icon({
-              iconUrl: normalizeMarkerIcon(resource.map_marker_icon),
-              iconSize: [32, 37],
-              iconAnchor: [16, 37],
-            });
 
             return (
               <Marker
                 key={resource.id}
                 position={[resource.lat, resource.lng]}
-                icon={icon}
+                icon={getResourceMarkerIcon(resource.map_marker_icon)}
                 eventHandlers={{ click: () => setSelectedResourceId(resource.id) }}
               >
                 <Popup>
