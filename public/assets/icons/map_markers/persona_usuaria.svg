@@ -1,4 +1,6 @@
 <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M16 4C13.7909 4 12 5.79086 12 8C12 10.2091 13.7909 12 16 12C18.2091 12 20 10.2091 20 8C20 5.79086 18.2091 4 16 4Z" fill="#2563eb"/>
-  <path d="M16 14C11.5817 14 8 17.5817 8 22V24H24V22C24 17.5817 20.4183 14 16 14Z" fill="#2563eb"/>
+  <!-- Cabeza: morado (#7c3aed) para diferenciar de los iconos de recursos -->
+  <path d="M16 4C13.7909 4 12 5.79086 12 8C12 10.2091 13.7909 12 16 12C18.2091 12 20 10.2091 20 8C20 5.79086 18.2091 4 16 4Z" fill="#7c3aed"/>
+  <!-- Cuerpo: mismo morado para mantener coherencia -->
+  <path d="M16 14C11.5817 14 8 17.5817 8 22V24H24V22C24 17.5817 20.4183 14 16 14Z" fill="#7c3aed"/>
 </svg>

@@ -129,7 +129,7 @@ Este documento centraliza las tareas pendientes y en curso para la mejora de la 
 - **Descripción**: Sugerir recursos cercanos a una usuaria usando la API de Claude. Implementado en `src/services/matchmakingApi.js` con cálculo de distancia Haversine (radio 20 km) y panel de resultados integrado en la ficha de persona, disponible en ambos modos (consulta y gestión). La llamada a la API pasa por el proxy de Vite para evitar CORS.
 - **Estado**: Implementada (pendiente de activar en producción la API) .
 - **Prioridad**: Media
-- **Pendiente**: Configurar `VITE_ANTHROPIC_API_KEY` en `.env` (nunca subir al repo). En producción mover la llamada a un endpoint de backend para no exponer la key en el bundle. Mientras tanto muestra mensaje informativo al usuario.
+- **Pendiente**: Configurar `VITE_ANTHROPIC_API_KEY` O adaptar otra api, en `.env` (nunca subir al repo). En producción mover la llamada a un endpoint de backend para no exponer la key en el bundle. Mientras tanto muestra mensaje informativo al usuario.
 
 ---
 
@@ -246,3 +246,12 @@ Este documento centraliza las tareas pendientes y en curso para la mejora de la 
 **Prioridad:** Media
 **Archivos modificados:** `src/pages/InternalMapPage.jsx`
 **Nota:** Los nombres de archivo de los iconos de recursos (salud.png, educacion.png, etc.) deben coincidir exactamente con los que existan en `/public/assets/icons/map_markers/`. Verificar en despliegue y ajustar LEGEND_ITEMS si algún icono no carga.
+
+### 25. Color de icono "usuaria atendida" en mapa interno
+**Descripción:** El SVG `persona_usuaria.svg` estaba en azul (#2563eb) y
+al ampliarse con el zoom-out se confundía visualmente con los iconos de
+recursos. Cambiado a morado (#7c3aed) para mejorar la diferenciación.
+Solicitado por la coordinadora vía ClickUp.
+**Estado:** Completada
+**Prioridad:** Media
+**Archivos modificados:** `public/assets/icons/map_markers/persona_usuaria.svg`
