@@ -360,8 +360,8 @@ function InternalPeopleGuidePage({ readOnly = false }) {
               <div className="internal-map-stage">
                 <MapContainer center={defaultCenter} zoom={11} className="internal-consult-map">
                   <TileLayer
-                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                      url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'
+                      url="https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png"
                   />
                   {filteredPeople.map((person) => {
                     // Omitir marcadores con coordenadas inválidas
@@ -590,8 +590,8 @@ function InternalPeopleGuidePage({ readOnly = false }) {
                 <div className="people-map-wrap">
                   <MapContainer center={defaultCenter} zoom={11} className="people-map">
                     <TileLayer
-                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                        url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'
+                        url="https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png"
                     />
                     {filteredPeople.map((person) => {
                       // Omitir marcadores con coordenadas inválidas
