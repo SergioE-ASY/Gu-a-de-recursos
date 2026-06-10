@@ -309,7 +309,6 @@ function InternalPeopleGuidePage({ readOnly = false }) {
           <span><i style={{ background: TYPE_COLORS.usuaria }} /> Usuaria Atendida</span>
           <span><i style={{ background: TYPE_COLORS.potencial }} /> Persona Potencial</span>
           <span><i style={{ background: TYPE_COLORS.recurso }} /> Persona Recurso</span>
-          <span><i style={{ background: "#2563eb" }} /> Recursos (centros/instalaciones)</span>
         </section>
 
         {error && <p className="error">{error}</p>}
@@ -380,30 +379,6 @@ function InternalPeopleGuidePage({ readOnly = false }) {
                             {PEOPLE_LABELS[person.tipo] || person.tipo} · {person.zona}
                           </Popup>
                         </Marker>
-                    );
-                  })}
-                  {resources.map((resource) => {
-                    // Omitir marcadores con coordenadas inválidas
-                    if (!isValidCoord(resource.lat, resource.lng)) return null;
-                    return (
-                        <CircleMarker
-                            key={`resource-${resource.id}`}
-                            center={[resource.lat, resource.lng]}
-                            radius={6}
-                            pathOptions={{
-                              color: "#2563eb",
-                              fillColor: "#2563eb",
-                              fillOpacity: 0.8,
-                              weight: 2,
-                            }}
-                            eventHandlers={{ click: () => openResourceSheet(resource.id) }}
-                        >
-                          <Popup>
-                            <strong>{resource.tit}</strong>
-                            <br />
-                            Recurso de la guia
-                          </Popup>
-                        </CircleMarker>
                     );
                   })}
                 </MapContainer>
